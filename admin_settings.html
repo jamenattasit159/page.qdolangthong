@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - Ang Thong AABM</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .gradient-admin {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .settings-card {
+            transition: all 0.3s ease;
+        }
+
+        .settings-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4f46e5;
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #4f46e5;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* === Announcement Styles === */
+        .announcement-card {
+            transition: all 0.25s ease;
+            border-left: 4px solid transparent;
+        }
+        .announcement-card.active {
+            border-left-color: #10b981;
+        }
+        .announcement-card.inactive {
+            border-left-color: #94a3b8;
+            opacity: 0.65;
+        }
+        .announcement-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -4px rgba(0,0,0,0.08);
+        }
+        #announcement-content-input {
+            min-height: 140px;
+            resize: vertical;
+            font-family: 'Sarabun', sans-serif;
+        }
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-inactive {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+    <!-- Navigation / Header -->
+    <header class="glass-header sticky top-0 z-50 border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 gradient-admin rounded-xl flex items-center justify-center text-white shadow-lg">
+                        <i class="fas fa-cogs text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-800">System Settings</h1>
+                        <p class="text-xs text-slate-500">การตั้งค่าระบบ Angthong Active Backlog Management (AABM)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="index.html"
+                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                        <i class="fas fa-home mr-1.5"></i> หน้าแรก
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-8" data-aos="fade-down">
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">System Configurations</h2>
+            <p class="text-slate-500">จัดการข้อกำหนดและสิทธิ์การใช้งานของระบบทั้งหมด</p>
+        </div>
+
+        <!-- Lockdown Settings Section -->
+        <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8" data-aos="fade-up">
+            <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-user-lock text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">ระบบ Lockdown งานประจำเดือน</h3>
+                        <p class="text-sm text-slate-500">ควบคุมการล็อคไม่ให้แก้ไขข้อมูลย้อนหลังหลังวันที่ 5</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <p class="text-sm text-slate-500 mb-6"><i class="fas fa-info-circle mr-1"></i> ตั้งค่าการล็อคแยกตามแต่ละฝ่าย: (ค่าเริ่มต้นคือ อัตโนมัติ - ล็อควันที่ 5 ของทุกเดือน)</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" id="lockdown-depts-container">
+                    <!-- Survey -->
+                    <div class="p-5 border border-slate-200 rounded-2xl bg-white hover:border-indigo-300 transition-all flex flex-col gap-3 shadow-sm">
+                        <div class="font-bold text-slate-700 flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mr-3"><i class="fas fa-map-marked-alt w-4 h-4 text-center"></i></div>
+                            ฝ่ายรังวัด
+                        </div>
+                        <select id="lockdown-survey" class="w-full border-slate-300 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 bg-slate-50 outline-none">
+                            <option value="auto">🤖 อัตโนมัติ (Auto)</option>
+                            <option value="unlocked">🔓 ปลดล็อค (Unlocked)</option>
+                            <option value="locked">🔒 ล็อคทันที (Force Lock)</option>
+                        </select>
+                    </div>
+
+                    <!-- Registration -->
+                    <div class="p-5 border border-slate-200 rounded-2xl bg-white hover:border-blue-300 transition-all flex flex-col gap-3 shadow-sm">
+                        <div class="font-bold text-slate-700 flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-folder-open w-4 h-4 text-center"></i></div>
+                            ฝ่ายทะเบียน
+                        </div>
+                        <select id="lockdown-registration" class="w-full border-slate-300 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 p-2.5 bg-slate-50 outline-none">
+                            <option value="auto">🤖 อัตโนมัติ (Auto)</option>
+                            <option value="unlocked">🔓 ปลดล็อค (Unlocked)</option>
+                            <option value="locked">🔒 ล็อคทันที (Force Lock)</option>
+                        </select>
+                    </div>
+
+                    <!-- Academic -->
+                    <div class="p-5 border border-slate-200 rounded-2xl bg-white hover:border-orange-300 transition-all flex flex-col gap-3 shadow-sm">
+                        <div class="font-bold text-slate-700 flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center mr-3"><i class="fas fa-book-reader w-4 h-4 text-center"></i></div>
+                            กลุ่มงานวิชาการ
+                        </div>
+                        <select id="lockdown-academic" class="w-full border-slate-300 rounded-xl text-sm focus:ring-orange-500 focus:border-orange-500 p-2.5 bg-slate-50 outline-none">
+                            <option value="auto">🤖 อัตโนมัติ (Auto)</option>
+                            <option value="unlocked">🔓 ปลดล็อค (Unlocked)</option>
+                            <option value="locked">🔒 ล็อคทันที (Force Lock)</option>
+                        </select>
+                    </div>
+
+                                        <!-- Admin -->
+                    <div class="p-5 border border-slate-200 rounded-2xl bg-white hover:border-teal-300 transition-all flex flex-col gap-3 shadow-sm">
+                        <div class="font-bold text-slate-700 flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center mr-3"><i class="fas fa-building w-4 h-4 text-center"></i></div>
+                            ฝ่ายอำนวยการ
+                        </div>
+                        <select id="lockdown-admin" class="w-full border-slate-300 rounded-xl text-sm focus:ring-teal-500 focus:border-teal-500 p-2.5 bg-slate-50 outline-none">
+                            <option value="auto">🤖 อัตโนมัติ (Auto)</option>
+                            <option value="unlocked">🔓 ปลดล็อค (Unlocked)</option>
+                            <option value="locked">🔒 ล็อคทันที (Force Lock)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-6 border-t border-slate-100 mt-2">
+                    <button id="btn-save-lockdown"
+                        class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
+                        <i class="fas fa-save"></i> บันทึกการตั้งค่า Lockdown
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Progress Type Assignment Settings Section -->
+        <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8" data-aos="fade-up"
+            data-aos-delay="50">
+            <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-tags text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">การกำหนดหมวดหมู่งานสุดขั้นตอน / งานศาล</h3>
+                        <p class="text-sm text-slate-500">อนุญาตให้เจ้าหน้าที่ติ๊กกำหนดหมวดหมู่ "งานสุดขั้นตอน" และ "งานศาล" สำหรับ <strong class="text-purple-600">งานเกิดใหม่ (ตั้งแต่ 1 ม.ค. 2569 เป็นต้นไป)</strong> แยกตามฝ่าย</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <p class="text-sm text-slate-500 mb-6"><i class="fas fa-info-circle mr-1"></i> ตั้งค่าแยกตามฝ่าย (เฉพาะงานเกิดใหม่ตั้งแต่วันที่ 1 ม.ค. 2569 ขึ้นไป): <strong>อนุญาต</strong> = เพิ่ม/เปลี่ยนหมวดได้ / <strong>จำกัด</strong> = ลดออกได้เท่านั้น <span class="text-red-600 font-bold ml-1">(งานเก่าที่รับเรื่องก่อน 1 ม.ค. 2569 ถูกล็อคห้ามปรับทุกกรณี)</span></p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Survey -->
+                    <div class="p-5 border border-slate-200 rounded-2xl bg-white hover:border-indigo-300 transition-all flex flex-col gap-3 shadow-sm">
+                        <div class="font-bold text-slate-700 flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mr-3"><i class="fas fa-map-marked-alt w-4 h-4 text-center"></i></div>
+                            ฝ่ายรังวัด
+                        </div>
+                        <select id="progress-assign-survey" class="w-full border-slate-300 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 bg-slate-50 outline-none">
+                            <option value="allowed">🔓 อนุญาต (Allowed)</option>
+                            <option value="restricted">🔒 จำกัดสิทธิ์ (Restricted)</option>
+                        </select>
+                    </div>
+
+                    <!-- Registration -->
+                    <div class="p-5 border border-slate-200 rounded-2xl bg-white hover:border-blue-300 transition-all flex flex-col gap-3 shadow-sm">
+                        <div class="font-bold text-slate-700 flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-folder-open w-4 h-4 text-center"></i></div>
+                            ฝ่ายทะเบียน
+                        </div>
+                        <select id="progress-assign-registration" class="w-full border-slate-300 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 p-2.5 bg-slate-50 outline-none">
+                            <option value="allowed">🔓 อนุญาต (Allowed)</option>
+                            <option value="restricted">🔒 จำกัดสิทธิ์ (Restricted)</option>
+                        </select>
+                    </div>
+
+                    <!-- Academic -->
+                    <div class="p-5 border border-slate-200 rounded-2xl bg-white hover:border-orange-300 transition-all flex flex-col gap-3 shadow-sm">
+                        <div class="font-bold text-slate-700 flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center mr-3"><i class="fas fa-book-reader w-4 h-4 text-center"></i></div>
+                            กลุ่มงานวิชาการ
+                        </div>
+                        <select id="progress-assign-academic" class="w-full border-slate-300 rounded-xl text-sm focus:ring-orange-500 focus:border-orange-500 p-2.5 bg-slate-50 outline-none">
+                            <option value="allowed">🔓 อนุญาต (Allowed)</option>
+                            <option value="restricted">🔒 จำกัดสิทธิ์ (Restricted)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-6 border-t border-slate-100 mt-2">
+                    <button id="btn-save-progress-assign"
+                        class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all flex items-center gap-2">
+                        <i class="fas fa-save"></i> บันทึกการตั้งค่า
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== Announcement Management Section ===== -->
+        <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8" data-aos="fade-up"
+            data-aos-delay="100">
+            <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-bullhorn text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">ระบบประกาศหน้า Login</h3>
+                        <p class="text-sm text-slate-500">จัดการข้อความประกาศที่แสดงก่อนเข้าสู่ระบบ (ผู้ใช้ต้องเลื่อนอ่านและกดยืนยัน)</p>
+                    </div>
+                </div>
+                <span id="announcement-count-badge"
+                    class="hidden px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">
+                    0 ประกาศ
+                </span>
+            </div>
+
+            <div class="p-8">
+                <!-- Add / Edit Form -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-6">
+                    <h4 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <i class="fas fa-plus-circle text-amber-500"></i>
+                        <span id="announcement-form-label">เพิ่มประกาศใหม่</span>
+                    </h4>
+                    <input type="hidden" id="announcement-edit-id" value="">
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">หัวข้อประกาศ</label>
+                            <input type="text" id="announcement-title-input"
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none bg-white"
+                                placeholder="เช่น แจ้งเตือนการปิดระบบประจำเดือน...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">เนื้อหาประกาศ</label>
+                            <textarea id="announcement-content-input"
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none bg-white"
+                                placeholder="ระบุเนื้อหาประกาศที่ต้องการให้เจ้าหน้าที่อ่านก่อนเข้าสู่ระบบ..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fas fa-bullseye text-amber-500"></i>
+                                <span>ฝ่ายเป้าหมาย (ประกาศให้ใครเห็น)</span>
+                            </label>
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2" id="announcement-dept-btn-group">
+                                <button type="button" data-dept="all" class="dept-select-btn px-3 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-amber-500 text-white border-amber-500 shadow-sm" onclick="AdminSettings.selectTargetDept('all')">
+                                    <i class="fas fa-globe"></i> ทุกฝ่าย (ทุกคน)
+                                </button>
+                                <button type="button" data-dept="survey" class="dept-select-btn px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200" onclick="AdminSettings.selectTargetDept('survey')">
+                                    <i class="fas fa-map-marked-alt text-indigo-500"></i> ฝ่ายรังวัด
+                                </button>
+                                <button type="button" data-dept="registration" class="dept-select-btn px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200" onclick="AdminSettings.selectTargetDept('registration')">
+                                    <i class="fas fa-folder-open text-blue-500"></i> ฝ่ายทะเบียน
+                                </button>
+                                <button type="button" data-dept="academic" class="dept-select-btn px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200" onclick="AdminSettings.selectTargetDept('academic')">
+                                    <i class="fas fa-book-reader text-orange-500"></i> กลุ่มงานวิชาการ
+                                </button>
+                                <button type="button" data-dept="admin" class="dept-select-btn px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-600 hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200" onclick="AdminSettings.selectTargetDept('admin')">
+                                    <i class="fas fa-building text-teal-500"></i> ฝ่ายอำนวยการ
+                                </button>
+                            </div>
+                            <input type="hidden" id="announcement-target-dept" value="all">
+                            <p class="text-[11px] text-slate-400 mt-1.5">
+                                <i class="fas fa-info-circle mr-1"></i> เมื่อเลือกฝ่าย เช่น <strong>ฝ่ายรังวัด</strong> ประกาศนี้จะแสดงเฉพาะเมื่อเจ้าหน้าที่ฝ่ายรังวัดเข้าสู่ระบบเท่านั้น
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap gap-6 items-center">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" id="announcement-active-checkbox" checked
+                                    class="w-4 h-4 rounded accent-amber-500">
+                                <span class="text-sm font-medium text-slate-700">เปิดใช้งานทันที</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" id="announcement-scroll-checkbox" checked
+                                    class="w-4 h-4 rounded accent-indigo-500">
+                                <span class="text-sm font-medium text-slate-700">บังคับเลื่อนอ่านครบก่อนกดตกลง</span>
+                            </label>
+                        </div>
+                        <div class="flex gap-3 pt-2">
+                            <button id="btn-save-announcement"
+                                class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md shadow-amber-200 transition-all flex items-center gap-2 text-sm">
+                                <i class="fas fa-save"></i> บันทึกประกาศ
+                            </button>
+                            <button id="btn-cancel-announcement"
+                                class="hidden px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2 text-sm">
+                                <i class="fas fa-times"></i> ยกเลิกแก้ไข
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Announcement List -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-600 mb-4 uppercase tracking-wider">ประกาศทั้งหมด</h4>
+                    <div id="announcement-list" class="space-y-3">
+                        <div class="text-center py-10 text-slate-400 text-sm">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-3"></i>
+                            <p>กำลังโหลดประกาศ...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Information / Disclaimer -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-amber-800 text-sm" data-aos="fade-up"
+            data-aos-delay="100">
+            <div class="flex gap-4">
+                <i class="fas fa-info-circle text-xl flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <strong class="block mb-1">หมายเหตุเกี่ยวกับการตั้งค่า:</strong>
+                    <ul class="list-disc list-inside space-y-1 opacity-90">
+                        <li>ค่า <strong>อัตโนมัติ</strong> เป็นค่ามาตรฐานที่ระบบใช้
+                            เพื่อให้รอบการรายงานมีความถูกต้องตามปฏิทิน</li>
+                        <li>หากต้องการ <strong>ปลดล็อค</strong> เพื่อให้เจ้าหน้าที่คีย์งานย้อนหลัง
+                            ควรเปิดใช้งานชั่วคราวเท่านั้น และปรับกลับเป็นค่าเดิมหลังเสร็จสิ้น</li>
+                        <li>การส่งผลการตั้งค่าจะมีผลทันทีต่อเจ้าหน้าที่ทุกคนที่ทำการบันทึกข้อมูล</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Announcement Acceptance Report Section ===== -->
+        <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8" data-aos="fade-up"
+            data-aos-delay="150">
+            <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-clipboard-check text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">รายงานการยอมรับประกาศ</h3>
+                        <p class="text-sm text-slate-500">ดูว่า User ไหนยอมรับประกาศแต่ละฉบับแล้วบ้าง</p>
+                    </div>
+                </div>
+                <button id="btn-refresh-accept-report"
+                    class="px-4 py-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-bold rounded-xl transition-all flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> รีเฟรช
+                </button>
+            </div>
+
+            <div class="p-8">
+                <!-- Summary Cards -->
+                <div id="accept-summary-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="text-center py-8 text-slate-400 text-sm col-span-2">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>กำลังโหลดรายงาน...</p>
+                    </div>
+                </div>
+
+                <!-- Detail Log Table -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-600 mb-3 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-list-ul text-slate-400"></i> ประวัติการยอมรับ (ล่าสุด 100 รายการ)
+                    </h4>
+                    <div class="overflow-x-auto rounded-2xl border border-slate-100">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">#</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ชื่อประกาศ</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Username</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">วันที่ยอมรับ</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">เวลา</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accept-log-tbody" class="divide-y divide-slate-100">
+                                <tr>
+                                    <td colspan="5" class="text-center py-8 text-slate-400 text-sm">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i> กำลังโหลด...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="max-w-7xl mx-auto px-4 py-12 text-center text-slate-400 text-sm">
+        <p>&copy; 2026 สำนักงานที่ดินจังหวัดอ่างทอง - Ang Thong Active Backlog Management (AABM)</p>
+    </footer>
+
+    <!-- AOS Script -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Application Scripts -->
+    <script src="js/api-config.js?v=2.6"></script>
+    <script src="js/data.js?v=2.6"></script>
+    <script src="js/admin_settings.js?v=2.6"></script>
+    <script>
+        AOS.init({ duration: 800, once: true });
+    </script>
+</body>
+
+</html>
+

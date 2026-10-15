@@ -1,0 +1,25 @@
+# Custom Error Pages
+ErrorDocument 404 /404.html
+ErrorDocument 403 /404.html
+
+# Directory Index priority
+DirectoryIndex index.php index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /backlog/
+
+  # 1. Hide index.php from URL: redirect /path/index.php to /path/
+  RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s(.*)/index\.php [NC]
+  RewriteRule ^ %1/ [R=301,L]
+
+  # 2. Redirect /file.php to /file (exclude /api/ to prevent interfering with API calls)
+  RewriteCond %{REQUEST_URI} !^/backlog/api/ [NC]
+  RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/backlog/([^.]+)\.php [NC]
+  RewriteRule ^ %1 [R=301,L]
+
+  # 3. Internally rewrite /file to /file.php if file.php exists
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}.php -f
+  RewriteRule ^(.*?)/?$ $1.php [L]
+</IfModule>

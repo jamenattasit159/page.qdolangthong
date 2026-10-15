@@ -1,0 +1,34 @@
+# Dependencies & External Libs (old duplicates)
+libs/api/
+
+# Database & SQL files
+*.sql
+
+# Backup files & Archives
+*.zip
+*.rar
+*.tar.gz
+*.7z
+backup/files/*
+!backup/files/.gitkeep
+
+# Sensitive config & secrets
+backup/config.php
+backup/settings.json
+
+# Logs & Debugging
+logs/*
+!logs/.gitkeep
+*.log
+api/save_debug.txt
+
+# Cache
+api/cache/*
+!api/cache/.htaccess
+!api/cache/.gitkeep
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

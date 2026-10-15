@@ -1,0 +1,270 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Export - Ang Thong AABM</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SheetJS (Excel) -->
+    <script src="libs/sheetjs/xlsx.full.min.js"></script>
+    <!-- jsPDF & AutoTable -->
+    <script src="libs/jspdf/jspdf.umd.min.js"></script>
+    <script src="libs/jspdf/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .gradient-registration {
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+        }
+
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .filter-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: white !important;
+            box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.3);
+        }
+
+        .filter-btn.active i {
+            color: white !important;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .print-only {
+                display: block !important;
+            }
+
+            body {
+                background: white;
+            }
+
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #eee !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+    <!-- Navigation / Header -->
+    <header class="glass-header sticky top-0 z-50 border-b border-slate-200 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 gradient-registration rounded-xl flex items-center justify-center text-white shadow-lg">
+                        <i class="fas fa-file-export text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-800">Registration Audit & Export</h1>
+                        <p class="text-xs text-slate-500">Ang Thong AABM Action Plan 2569</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="index.html"
+                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                        <i class="fas fa-home mr-1.5"></i> หน้าแรก
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Control Panel -->
+        <section class="mb-8 no-print" data-aos="fade-down">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col gap-6">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            <i class="fas fa-calendar-alt mr-1.5 text-indigo-500"></i>เลือกเดือนที่ต้องการรายงาน
+                        </label>
+                        <input type="month" id="export-month"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none">
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btn-update"
+                            class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
+                            <i class="fas fa-sync-alt"></i> ดึงข้อมูล
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Selector -->
+                <div class="border-t border-slate-100 pt-4">
+                    <label class="block text-sm font-semibold text-slate-700 mb-3">
+                        <i class="fas fa-filter mr-1.5 text-indigo-500"></i>เลือกประเภทข้อมูลที่จะสรุป/ส่งออก
+                    </label>
+                    <div class="flex flex-wrap gap-2" id="filter-group">
+                        <button data-type="all"
+                            class="filter-btn active px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-600 font-bold transition-all hover:bg-slate-50">
+                            <i class="fas fa-list-ul mr-1.5"></i> ทั้งหมด (Intake)
+                        </button>
+                        <button data-type="comp30"
+                            class="filter-btn px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-600 font-bold transition-all hover:bg-slate-50">
+                            <i class="fas fa-check-circle mr-1.5 text-emerald-500"></i> เสร็จใน 30 วัน
+                        </button>
+                        <button data-type="comp60"
+                            class="filter-btn px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-600 font-bold transition-all hover:bg-slate-50">
+                            <i class="fas fa-hourglass-half mr-1.5 text-amber-500"></i> เสร็จใน 60 วัน
+                        </button>
+                        <button data-type="pending"
+                            class="filter-btn px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-600 font-bold transition-all hover:bg-slate-50">
+                            <i class="fas fa-exclamation-triangle mr-1.5 text-rose-500"></i> ค้างดำเนินการ
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 flex justify-end gap-3">
+                    <button id="btn-excel"
+                        class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center gap-2">
+                        <i class="fas fa-file-excel"></i> ส่งออก Excel
+                    </button>
+                    <button id="btn-pdf"
+                        class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-200 transition-all flex items-center gap-2">
+                        <i class="fas fa-file-pdf"></i> พิมพ์ PDF
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Overview -->
+        <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-aos="fade-up"
+            data-aos-delay="100">
+            <!-- Stats will be injected here -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm stat-card">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+                    <i class="fas fa-layer-group text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-slate-500 mb-1">รับใหม่ทั้งหมด</p>
+                <h3 id="stat-intake" class="text-3xl font-bold text-slate-800">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm stat-card">
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
+                    <i class="fas fa-check-circle text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-slate-500 mb-1">เสร็จใน 30 วัน</p>
+                <h3 id="stat-30" class="text-3xl font-bold text-slate-800">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm stat-card">
+                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
+                    <i class="fas fa-hourglass-half text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-slate-500 mb-1">เสร็จใน 60 วัน</p>
+                <h3 id="stat-60" class="text-3xl font-bold text-slate-800">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm stat-card">
+                <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-slate-500 mb-1">ค้างดำเนินการ</p>
+                <h3 id="stat-pending" class="text-3xl font-bold text-slate-800">0</h3>
+            </div>
+        </div>
+
+        <!-- Detailed Audit List -->
+        <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden" data-aos="fade-up"
+            data-aos-delay="200">
+            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">รายละเอียดรายการรับเรื่อง - ฝ่ายทะเบียน</h2>
+                    <p class="text-sm text-slate-500 mt-1">รายการข้อมูลดิบที่ใช้ในการคำนวณรายงาน ABM</p>
+                </div>
+                <div
+                    class="flex items-center text-sm text-slate-500 bg-white px-4 py-2 rounded-full border border-slate-200">
+                    <span class="mr-2">เรียงตาม:</span>
+                    <span class="font-bold text-slate-700">วันที่รับ (ล่าสุด)</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left" id="export-table">
+                    <thead class="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold tracking-wider">
+                        <tr>
+                            <th class="px-6 py-4 text-center">ลำดับ</th>
+                            <th class="px-6 py-4">วันที่รับเรื่อง</th>
+                            <th class="px-6 py-4">เลขที่คำขอ</th>
+                            <th class="px-6 py-4">เรื่อง</th>
+                            <th class="px-6 py-4">ผู้ขอ/คู่กรณี</th>
+                            <th class="px-6 py-4 text-center">วันที่เสร็จ</th>
+                            <th class="px-6 py-4 text-center">ระยะเวลา</th>
+                            <th class="px-6 py-4 text-center">สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        <!-- Table rows will be injected here -->
+                        <tr>
+                            <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fas fa-search text-4xl mb-4 block"></i>
+                                เลือกช่วงเวลาที่ต้องการแล้วกด "อัปเดตข้อมูล"
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 py-12 text-center text-slate-400 text-sm no-print">
+        <p>&copy; 2026 สำนักงานที่ดินจังหวัดอ่างทอง - Ang Thong Active Backlog Management (AABM)</p>
+    </footer>
+
+    <!-- AOS Script -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Application Scripts -->
+    <script src="js/registration_abm_export.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true });
+    </script>
+</body>
+
+</html>

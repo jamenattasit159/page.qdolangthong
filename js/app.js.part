@@ -1,0 +1,65 @@
+
+    async sendToRegistration(id, type) {
+        const status = document.getElementById('update-status-input').value;
+        const rv_12 = document.getElementById('update-rv12-input')?.value;
+        const survey_date = document.getElementById('update-survey-date')?.value;
+        // Use today's date for completion default
+        let completion_date = document.getElementById('update-completion-date').value;
+        if (!completion_date) {
+            completion_date = new Date().toISOString().split('T')[0];
+        }
+
+        if (!status) {
+             Swal.fire('กรุณาระบุข้อความ', 'โปรดระบุสาเหตุ/สถานะก่อนส่งฝ่ายทะเบียน', 'warning');
+             return;
+        }
+
+        const confirmResult = await Swal.fire({
+            title: 'ยืนยันการบันทึกและส่ง?',
+            text: `คุณต้องการบันทึกข้อความ "${status}" และส่งงานฝ่ายทะเบียนใช่หรือไม่?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0d9488',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '<i class="fas fa-paper-plane mr-2"></i> ยืนยันส่ง',
+            cancelButtonText: 'ยกเลิก'
+        });
+
+        if (!confirmResult.isConfirmed) return;
+
+        try {
+            // Get old data for history
+            let items = [];
+            if (type === 'survey') items = await DataManager.getSurveyItems();
+            else if (type === 'registration') items = await DataManager.getRegistrationItems();
+            else if (type === 'academic') items = await DataManager.getAcademicItems();
+
+            const oldItem = items.find(i => i.id == id);
+            const oldStatus = oldItem ? (oldItem.status_cause || oldItem.status || '-') : '-';
+
+            if (type === 'survey') {
+                await DataManager.updateSurveyItem({ 
+                    id, 
+                    status_cause: status, 
+                    rv_12, 
+                    survey_date, 
+                    completion_date 
+                });
+            } else if (type === 'registration') {
+                await DataManager.updateRegistrationItem({ id, status_cause: status, completion_date });
+            } else if (type === 'academic') {
+                await DataManager.updateAcademicItem({ id, status_cause: status, completion_date });
+            }
+
+            // Log history
+            await this.addStatusHistory(id, type, 'ส่งฝ่ายทะเบียน', oldStatus, status);
+
+            Swal.fire('สำเร็จ', 'บันทึกและส่งฝ่ายทะเบียนเรียบร้อยแล้ว', 'success');
+            document.getElementById('detail-modal').classList.add('hidden');
+            this.refreshLists(type);
+
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'ไม่สามารถดำเนินการได้', 'error');
+        }
+    },

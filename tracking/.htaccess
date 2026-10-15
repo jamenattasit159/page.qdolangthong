@@ -1,0 +1,19 @@
+DirectoryIndex index.php index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1. Hide index.php: If user visits /.../index.php directly in address bar, 301 redirect to clean path
+  RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s(.*)/index\.php [NC]
+  RewriteRule ^index\.php$ %1/ [R=301,L]
+
+  # 2. Hide .php for other files (exclude /api/)
+  RewriteCond %{REQUEST_URI} !/api/ [NC]
+  RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s(.*)/([^.]+)\.php [NC]
+  RewriteRule ^([^.]+)\.php$ %1/$2 [R=301,L]
+
+  # 3. Internal rewrite clean URL to .php file
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}.php -f
+  RewriteRule ^(.*?)/?$ $1.php [L]
+</IfModule>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงานคัดแยกงานฝ่ายทะเบียน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .table-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: #bfdbfe;
+            border-radius: 9999px;
+        }
+
+        .table-scroll::-webkit-scrollbar-track {
+            background: #eff6ff;
+            border-radius: 9999px;
+        }
+
+        .category-filter-btn.active {
+            background-color: #1d4ed8;
+            border-color: #1d4ed8;
+            color: #ffffff;
+        }
+
+        #details-table_wrapper {
+            width: 100%;
+        }
+
+        #details-table_wrapper .dataTables_scroll {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        #details-table_wrapper .dataTables_scrollHead,
+        #details-table_wrapper .dataTables_scrollBody {
+            overflow-x: auto !important;
+        }
+
+        #details-table_wrapper .dataTables_length,
+        #details-table_wrapper .dataTables_filter,
+        #details-table_wrapper .dataTables_info,
+        #details-table_wrapper .dataTables_paginate {
+            float: none;
+            margin: 0;
+        }
+
+        #details-table_wrapper .dataTables_length,
+        #details-table_wrapper .dataTables_filter {
+            margin-bottom: 0.5rem;
+        }
+
+        #details-table_wrapper .dataTables_filter input,
+        #details-table_wrapper .dataTables_length select {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            margin-left: 0.25rem;
+            background: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            #details-table_wrapper .dataTables_paginate {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+    <header class="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                    <i class="fas fa-table"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">รายงานคัดแยกงานฝ่ายทะเบียน</h1>
+                    <p class="text-xs text-slate-500">สรุปผลแบบเลือกช่วงวันที่ พร้อมรายละเอียดรายการ</p>
+                </div>
+            </div>
+            <a href="index.html" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100">
+                <i class="fas fa-house mr-1"></i> กลับหน้าแรก
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        <section class="bg-white border border-slate-200 rounded-2xl p-4 md:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label for="start-date" class="block text-sm font-semibold text-slate-700 mb-1">ตั้งแต่วันที่</label>
+                    <input id="start-date" type="date"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div>
+                    <label for="end-date" class="block text-sm font-semibold text-slate-700 mb-1">ถึงวันที่</label>
+                    <input id="end-date" type="date"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div class="md:col-span-2 flex gap-2">
+                    <button id="btn-load"
+                        class="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
+                        <i class="fas fa-sync-alt mr-1"></i> ดึงข้อมูล
+                    </button>
+                </div>
+            </div>
+            <div id="meta-info" class="mt-3 text-sm text-slate-500"></div>
+        </section>
+
+        <section class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                <h2 class="text-lg font-bold text-slate-800">ตารางสรุปคัดแยกตามประเภทงาน</h2>
+            </div>
+            <div class="table-scroll overflow-auto">
+                <table class="min-w-[1200px] w-full text-sm">
+                    <thead class="bg-blue-50 text-blue-900">
+                        <tr>
+                            <th class="px-3 py-3 text-left font-bold">ประเภทงาน</th>
+                            <th class="px-3 py-3 text-center font-bold">งานค้าง</th>
+                            <th class="px-3 py-3 text-center font-bold">งานเสร็จ</th>
+                            <th class="px-3 py-3 text-center font-bold">งานค้างยกไป</th>
+                            <th class="px-3 py-3 text-center font-bold">อยู่ระหว่างประกาศ</th>
+                            <th class="px-3 py-3 text-center font-bold">แจ้งครั้งที่ 1</th>
+                            <th class="px-3 py-3 text-center font-bold">แจ้งครั้งที่ 2</th>
+                            <th class="px-3 py-3 text-center font-bold">แจ้งสิทธิ์</th>
+                            <th class="px-3 py-3 text-center font-bold">อุทธรณ์</th>
+                            <th class="px-3 py-3 text-center font-bold">งานศาล</th>
+                            <th class="px-3 py-3 text-center font-bold">อื่นๆ</th>
+                            <th class="px-3 py-3 text-center font-bold">รวมทั้งหมด</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center gap-3">
+                <div class="space-y-2 w-full">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <h2 class="text-lg font-bold text-slate-800">รายละเอียดรายการ</h2>
+                        <div id="detail-count" class="text-sm text-slate-500"></div>
+                    </div>
+                    <div id="category-filters" class="flex flex-wrap gap-2 overflow-x-auto pb-1"></div>
+                </div>
+            </div>
+            <div class="px-2 md:px-4 py-3">
+                <table id="details-table" class="w-full text-sm">
+                    <thead class="bg-slate-100 text-slate-700 sticky top-0">
+                        <tr>
+                            <th class="px-3 py-3 text-center">#</th>
+                            <th class="px-3 py-3 text-left">ประเภทงาน</th>
+                            <th class="px-3 py-3 text-left">สถานะหลัก</th>
+                            <th class="px-3 py-3 text-left">กลุ่มสถานะ</th>
+                            <th class="px-3 py-3 text-left">วันที่รับ</th>
+                            <th class="px-3 py-3 text-left">เลขที่คำขอ</th>
+                            <th class="px-3 py-3 text-left">เรื่อง</th>
+                            <th class="px-3 py-3 text-left">ผู้เกี่ยวข้อง</th>
+                            <th class="px-3 py-3 text-left">สถานะ/สาเหตุค้าง</th>
+                            <th class="px-3 py-3 text-left">วันที่เสร็จ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="details-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="js/error-tracker.js?v=1.0"></script>
+    <script src="js/registration_classification_dashboard.js"></script>
+</body>
+
+</html>

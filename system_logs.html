@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity & Audit Dashboard - สำนักงานที่ดินจังหวัดอ่างทอง</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .glass-nav { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .gradient-admin { background: linear-gradient(135deg, #4338ca 0%, #312e81 100%); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* DataTables Custom Styling */
+        .dataTables_wrapper { font-family: 'Sarabun', sans-serif; width: 100%; }
+        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate { padding: 10px 2px; font-size: 13px; color: #475569; }
+        .dataTables_wrapper .dataTables_filter input { border: 1px solid #cbd5e1; border-radius: 10px; padding: 6px 12px; margin-left: 6px; outline: none; transition: all 0.2s; font-size: 13px; background: white; }
+        .dataTables_wrapper .dataTables_filter input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+        .dataTables_wrapper .dataTables_length select { border: 1px solid #cbd5e1; border-radius: 10px; padding: 5px 24px 5px 8px; outline: none; background: white; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; padding: 4px 10px !important; margin: 0 2px !important; background: white !important; color: #475569 !important; font-weight: 500; font-size: 12px; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background: #eef2ff !important; border-color: #818cf8 !important; color: #4338ca !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: linear-gradient(135deg, #6366f1, #4f46e5) !important; border-color: #4f46e5 !important; color: white !important; font-weight: bold; }
+        table.dataTable thead th { background: #f8fafc !important; color: #334155 !important; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 2px solid #e2e8f0 !important; padding: 10px 8px !important; white-space: nowrap; }
+        table.dataTable tbody tr { transition: background-color 0.15s; }
+        table.dataTable tbody tr:hover { background-color: #f1f5f9 !important; }
+        table.dataTable tbody td { padding: 8px 8px !important; vertical-align: middle; border-bottom: 1px solid #f1f5f9 !important; font-size: 12px; word-break: break-word; }
+        table.dataTable { width: 100% !important; margin: 0 !important; }
+
+        /* Timeline styling */
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 19px;
+            top: 36px;
+            bottom: -20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+        .timeline-item:last-child::before { display: none; }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+    <!-- Navigation Bar -->
+    <header class="glass-nav sticky top-0 z-40 shadow-sm">
+        <div class="w-full max-w-[96%] 2xl:max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 gradient-admin rounded-xl flex items-center justify-center text-white shadow-md">
+                        <i class="fas fa-shield-halved text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-bold text-slate-800 leading-tight">ระบบตรวจสอบและบันทึกประวัติการทำงาน (Audit & Activity Dashboard)</h1>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500">ติดตามทุกการแก้ไขข้อมูล ปรับเปลี่ยนสถานะ และตรวจสอบความโปร่งใสรายแปลง/รายเรื่อง</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportLogsToCSV()" class="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all shadow-sm flex items-center gap-1.5">
+                        <i class="fas fa-file-csv text-emerald-600 text-sm"></i> ส่งออก CSV
+                    </button>
+                    <button onclick="refreshData()" class="px-3.5 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-xl transition-all shadow-sm flex items-center gap-1.5">
+                        <i id="refreshIcon" class="fas fa-sync-alt text-sm"></i> รีเฟรช
+                    </button>
+                    <a href="index.html" class="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-1.5">
+                        <i class="fas fa-arrow-left"></i> กลับหน้าแรก
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-[96%] 2xl:max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+        <!-- Time Range Selector Toolbar -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">
+                    <i class="fas fa-calendar-day mr-1 text-indigo-500"></i> ช่วงเวลา:
+                </span>
+                <div class="inline-flex rounded-xl bg-slate-100 p-1 gap-1 text-xs font-semibold">
+                    <button id="btnPresetToday" onclick="setTimePreset('today')" class="px-3 py-1.5 rounded-lg transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5">
+                        <span>วันนี้</span>
+                        <span id="badgeTodayCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white">0</span>
+                    </button>
+                    <button id="btnPresetYesterday" onclick="setTimePreset('yesterday')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-white">เมื่อวาน</button>
+                    <button id="btnPreset7days" onclick="setTimePreset('7days')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-white">7 วันล่าสุด</button>
+                    <button id="btnPreset30days" onclick="setTimePreset('30days')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-white">30 วันล่าสุด</button>
+                    <button id="btnPresetAll" onclick="setTimePreset('all')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-white">ทั้งหมด</button>
+                </div>
+            </div>
+
+            <!-- Custom Date Range Inputs -->
+            <div class="flex items-center gap-2 text-xs">
+                <span class="text-slate-400 font-medium">หรือกำหนดเอง:</span>
+                <input type="date" id="filterDateFrom" class="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700 outline-none focus:border-indigo-500">
+                <span class="text-slate-400">ถึง</span>
+                <input type="date" id="filterDateTo" class="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700 outline-none focus:border-indigo-500">
+                <button onclick="applyCustomDateFilter()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-medium transition-all shadow-sm">
+                    ค้นหา
+                </button>
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Card 1: Total Modifications -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">การปรับปรุงทั้งหมด</span>
+                    <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base group-hover:scale-110 transition-transform">
+                        <i class="fas fa-pen-to-square"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpiTotalActions" class="text-2xl font-extrabold text-slate-800">0</span>
+                    <span class="text-xs text-slate-500">ครั้ง</span>
+                </div>
+                <div class="mt-2 text-[11px] text-indigo-600 font-medium flex items-center gap-1">
+                    <i class="fas fa-clock"></i> <span id="kpiTimeScopeLabel">ในช่วงเวลาที่เลือก</span>
+                </div>
+            </div>
+
+            <!-- Card 2: Work Items Touched -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-blue-300 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">เรื่อง/แปลงที่ถูกแก้ไข</span>
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base group-hover:scale-110 transition-transform">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpiUniqueWorks" class="text-2xl font-extrabold text-slate-800">0</span>
+                    <span class="text-xs text-slate-500">เรื่อง</span>
+                </div>
+                <div class="mt-2 text-[11px] text-blue-600 font-medium flex items-center gap-1">
+                    <i class="fas fa-layer-group"></i> แยกตามรายเลขรับ
+                </div>
+            </div>
+
+            <!-- Card 3: Active Staff Today -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-emerald-300 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">เจ้าหน้าที่ที่มีการแก้ไข</span>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-gear"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpiActiveUsers" class="text-2xl font-extrabold text-slate-800">0</span>
+                    <span class="text-xs text-slate-500">คน</span>
+                </div>
+                <div class="mt-2 text-[11px] text-emerald-600 font-medium truncate" id="kpiActiveUsersList">
+                    ตรวจจับจากชื่อผู้ใช้งาน
+                </div>
+            </div>
+
+            <!-- Card 4: Status Updates -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-amber-300 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">การเปลี่ยนสถานะ</span>
+                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-base group-hover:scale-110 transition-transform">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpiStatusCount" class="text-2xl font-extrabold text-slate-800">0</span>
+                    <span class="text-xs text-slate-500">รายการ</span>
+                </div>
+                <div class="mt-2 text-[11px] text-amber-600 font-medium flex items-center gap-1">
+                    <i class="fas fa-arrow-right-arrow-left"></i> มีการปรับสถานะงาน
+                </div>
+            </div>
+
+            <!-- Card 5: Deletions Alert -->
+            <div id="cardDeletions" class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden group transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">การลบข้อมูล (Delete)</span>
+                    <div id="iconDeletions" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-base">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpiDeleteCount" class="text-2xl font-extrabold text-slate-800">0</span>
+                    <span class="text-xs text-slate-500">รายการ</span>
+                </div>
+                <div id="labelDeletions" class="mt-2 text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                    <i class="fas fa-check-circle text-emerald-500"></i> ไม่พบการลบงาน
+                </div>
+            </div>
+        </div>
+
+        <!-- Department & Action Breakdown Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <!-- Department Distribution -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-800">สัดส่วนแยกตามฝ่าย</h3>
+                    </div>
+                    <span id="deptTotalLabel" class="text-xs font-semibold text-slate-400">0 รายการ</span>
+                </div>
+                <div class="space-y-3" id="deptBreakdownBars">
+                    <!-- Progress bars rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Action Types Distribution -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-sliders"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-800">ประเภทการกระทำ</h3>
+                    </div>
+                    <span id="actionTotalLabel" class="text-xs font-semibold text-slate-400">0 รายการ</span>
+                </div>
+                <div class="space-y-3" id="actionBreakdownBars">
+                    <!-- Progress bars rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Top Active Staff Ranking -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-ranking-star"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-800">ผู้ใช้งานที่มีการแก้ไขสูงสุด</h3>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-400">Top Ranking</span>
+                </div>
+                <div class="space-y-2.5 max-h-[165px] overflow-y-auto pr-1" id="topUsersList">
+                    <!-- List rendered via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- TODAY'S WORK MODIFICATION FEED (เจาะลึกงานที่ถูกแก้ประจำวัน) -->
+        <!-- ======================================================== -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-indigo-50/30">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
+                        <i class="fas fa-calendar-check text-base"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-base font-bold text-slate-800">งานที่มีการปรับแก้ประจำวัน (Today's Live Audit Feed)</h2>
+                            <span id="badgeTodayFeedCount" class="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">0 เรื่อง</span>
+                        </div>
+                        <p class="text-xs text-slate-500">สรุปการเปลี่ยนแปลงรายเรื่อง/รายแปลงที่เกิดขึ้นวันนี้ ช่วยให้ติดตามงานที่ถูกแก้ไขได้อย่างรวดเร็วและตรงจุด</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleTodayFeedView()" id="btnToggleTodayFeed" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-all flex items-center gap-1">
+                        <i class="fas fa-eye-slash"></i> ซ่อน/แสดง
+                    </button>
+                </div>
+            </div>
+
+            <div id="todayFeedContainer" class="p-5 space-y-4">
+                <!-- Feed cards populated via JS -->
+                <div id="todayFeedEmpty" class="text-center py-10 text-slate-400">
+                    <i class="fas fa-folder-open text-4xl mb-3 opacity-30"></i>
+                    <p class="text-sm font-medium">ยังไม่มีการแก้ไขข้อมูลในวันนี้</p>
+                    <p class="text-xs text-slate-400 mt-1">เมื่อเจ้าหน้าที่หรือผู้ดูแลระบบแก้ไขสถานะหรือข้อมูลงาน รายการจะปรากฏที่นี่ทันที</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- COMPREHENSIVE AUDIT LOGS TABLE & ADVANCED FILTER -->
+        <!-- ======================================================== -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+            <div class="p-5 border-b border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800">ตารางบันทึกกิจกรรมและประวัติแบบละเอียด (Comprehensive Audit Log Explorer)</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">รวมและตัดข้อมูลซ้ำซ้อนระหว่างระบบกิจกรรม (Activity) และประวัติสถานะ (Status) พร้อมแสดงรายละเอียดก่อนและหลังแก้</p>
+                    </div>
+                    <!-- Mode switch -->
+                    <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-medium border border-slate-200/60 flex-wrap">
+                        <button onclick="setLogMode('unified')" id="btnModeUnified" class="px-3 py-1.5 rounded-lg bg-white text-indigo-700 font-bold shadow-sm flex items-center gap-1.5 transition-all">
+                            <i class="fas fa-layer-group text-indigo-500"></i> รวมข้อมูลอัจฉริยะ (แนะนำ)
+                        </button>
+                        <button onclick="setLogMode('status')" id="btnModeStatus" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+                            <i class="fas fa-tag"></i> เฉพาะสถานะ
+                        </button>
+                        <button onclick="setLogMode('activity')" id="btnModeActivity" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+                            <i class="fas fa-list-check"></i> เฉพาะกิจกรรม
+                        </button>
+                        <button onclick="setLogMode('raw')" id="btnModeRaw" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+                            <i class="fas fa-database"></i> ข้อมูลดิบทั้งหมด
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Bar -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/70">
+                    <!-- Filter: Department -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">ฝ่าย/กลุ่มงาน</label>
+                        <select id="filterDept" onchange="applyFilters()" class="w-full text-xs font-medium bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 outline-none focus:border-indigo-500">
+                            <option value="all">ทุกฝ่าย (ทั้งหมด)</option>
+                            <option value="survey">ฝ่ายรังวัด</option>
+                            <option value="registration">ฝ่ายทะเบียน</option>
+                            <option value="academic">กลุ่มงานวิชาการ</option>
+                            <option value="admin">ฝ่ายอำนวยการ</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter: User -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">ผู้ใช้งาน / เจ้าหน้าที่</label>
+                        <select id="filterUserSelect" onchange="applyFilters()" class="w-full text-xs font-medium bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 outline-none focus:border-indigo-500">
+                            <option value="all">ผู้ใช้งานทุกคน</option>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+
+                    <!-- Filter: Action Type -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">ประเภทการกระทำ</label>
+                        <select id="filterActionSelect" onchange="applyFilters()" class="w-full text-xs font-medium bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 outline-none focus:border-indigo-500">
+                            <option value="all">ทุกประเภทการกระทำ</option>
+                            <option value="STATUS">เปลี่ยนสถานะ (Status Change)</option>
+                            <option value="UPDATE">อัปเดตข้อมูลทั่วไป (Update)</option>
+                            <option value="ADD">เพิ่มงานใหม่ (Add)</option>
+                            <option value="DELETE">ลบข้อมูล (Delete)</option>
+                        </select>
+                    </div>
+
+                    <!-- Reset button -->
+                    <div class="flex items-end">
+                        <button onclick="resetFilters()" class="w-full text-xs font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg px-3 py-1.5 transition-all flex items-center justify-center gap-1.5">
+                            <i class="fas fa-rotate-left"></i> ล้างตัวกรอง
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5">
+                <div class="overflow-x-auto w-full">
+                    <table id="logsTable" class="w-full text-left display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th style="width: 10%; min-width: 90px;">วัน / เวลา</th>
+                                <th style="width: 9%; min-width: 85px;">ฝ่าย</th>
+                                <th style="width: 22%; min-width: 160px;">ข้อมูลงาน / เรื่อง</th>
+                                <th style="width: 11%; min-width: 90px;">ผู้ดำเนินการ</th>
+                                <th style="width: 11%; min-width: 90px;">การกระทำ</th>
+                                <th style="width: 26%; min-width: 180px;">รายละเอียดความเปลี่ยนแปลง (Diff View)</th>
+                                <th style="width: 11%; min-width: 95px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data populated via DataTables -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- ITEM AUDIT TRAIL MODAL (ตามงานรายเรื่องแบบ Step-by-Step) -->
+    <!-- ======================================================== -->
+    <div id="itemHistoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-900 to-indigo-950 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white text-lg">
+                        <i class="fas fa-timeline"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-bold text-white">ประวัติการดำเนินงานรายเรื่อง (Item Audit Trail)</h3>
+                            <span id="modalDeptBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white">-</span>
+                        </div>
+                        <p class="text-xs text-slate-300">ไล่เรียงทุกการเปลี่ยนแปลงตั้งแต่สร้างเรื่องจนถึงปัจจุบัน</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="printItemAuditTrail()" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg transition-all flex items-center gap-1.5">
+                        <i class="fas fa-print"></i> พิมพ์ประวัติ
+                    </button>
+                    <button onclick="closeItemHistoryModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50/50" id="itemHistoryContent">
+                <!-- Work Overview Card -->
+                <div id="modalWorkCard" class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- Timeline Section -->
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i class="fas fa-history text-indigo-500"></i> ลำดับเหตุการณ์และประวัติการแก้ไข (Timeline)
+                    </h4>
+                    <div id="modalTimelineList" class="space-y-4 relative pl-2">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-100 bg-white flex justify-between items-center text-xs text-slate-500">
+                <span id="modalTimelineCount">ทั้งหมด 0 เหตุการณ์</span>
+                <button onclick="closeItemHistoryModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+    <script>
+        // Global State
+        let rawLogData = null;
+        let dataTable = null;
+        let currentPreset = 'today';
+        let currentMode = 'unified';
+        let currentCustomFrom = '';
+        let currentCustomTo = '';
+
+        // Department dictionary
+        const DEPT_MAP = {
+            'survey': { text: 'ฝ่ายรังวัด', icon: 'fa-map-location-dot', color: 'indigo', bg: 'bg-indigo-50', textCol: 'text-indigo-600', border: 'border-indigo-200', barCol: 'bg-indigo-600' },
+            'registration': { text: 'ฝ่ายทะเบียน', icon: 'fa-folder-open', color: 'blue', bg: 'bg-blue-50', textCol: 'text-blue-600', border: 'border-blue-200', barCol: 'bg-blue-600' },
+            'academic': { text: 'กลุ่มงานวิชาการ', icon: 'fa-graduation-cap', color: 'orange', bg: 'bg-orange-50', textCol: 'text-orange-600', border: 'border-orange-200', barCol: 'bg-orange-500' },
+            'admin': { text: 'ฝ่ายอำนวยการ', icon: 'fa-building', color: 'teal', bg: 'bg-teal-50', textCol: 'text-teal-600', border: 'border-teal-200', barCol: 'bg-teal-600' }
+        };
+
+        // Date helper
+        function parseDateSafely(str) {
+            if (!str) return null;
+            const t = str.replace(' ', 'T');
+            const d = new Date(t);
+            if (isNaN(d.getTime())) {
+                const parts = str.split(' ');
+                const ymd = parts[0].split('-');
+                const hms = (parts[1] || '00:00:00').split(':');
+                return new Date(ymd[0], ymd[1] - 1, ymd[2], hms[0], hms[1], hms[2] || 0);
+            }
+            return d;
+        }
+
+        // Initialize on load
+        $(document).ready(function() {
+            // Set default date picker values
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('filterDateFrom').value = todayStr;
+            document.getElementById('filterDateTo').value = todayStr;
+
+            // Load initial logs
+            fetchLogsData();
+        });
+
+        // Set Date Preset
+        function setTimePreset(preset) {
+            currentPreset = preset;
+            currentCustomFrom = '';
+            currentCustomTo = '';
+
+            // Update button styles
+            const presets = ['Today', 'Yesterday', '7days', '30days', 'All'];
+            presets.forEach(p => {
+                const btn = document.getElementById(`btnPreset${p}`);
+                if (btn) {
+                    if (p.toLowerCase() === preset.toLowerCase()) {
+                        btn.className = 'px-3 py-1.5 rounded-lg transition-all bg-indigo-600 text-white shadow-sm font-semibold flex items-center gap-1.5';
+                    } else {
+                        btn.className = 'px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-white font-medium';
+                    }
+                }
+            });
+
+            fetchLogsData();
+        }
+
+        // Apply Custom Date Filter
+        function applyCustomDateFilter() {
+            const from = document.getElementById('filterDateFrom').value;
+            const to = document.getElementById('filterDateTo').value;
+            if (!from || !to) {
+                Swal.fire('แจ้งเตือน', 'กรุณาเลือกวันที่เริ่มต้นและสิ้นสุดให้ครบถ้วน', 'info');
+                return;
+            }
+            if (from > to) {
+                Swal.fire('ข้อผิดพลาด', 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด', 'warning');
+                return;
+            }
+
+            currentPreset = 'custom';
+            currentCustomFrom = from;
+            currentCustomTo = to;
+
+            // Unhighlight all presets
+            const presets = ['Today', 'Yesterday', '7days', '30days', 'All'];
+            presets.forEach(p => {
+                const btn = document.getElementById(`btnPreset${p}`);
+                if (btn) btn.className = 'px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-white font-medium';
+            });
+
+            fetchLogsData();
+        }
+
+        // Set Log View Mode
+        function setLogMode(mode) {
+            currentMode = mode;
+            const modes = ['Unified', 'Status', 'Activity', 'Raw'];
+            modes.forEach(m => {
+                const btn = document.getElementById(`btnMode${m}`);
+                if (btn) {
+                    if (m.toLowerCase() === mode.toLowerCase()) {
+                        btn.className = 'px-3 py-1.5 rounded-lg bg-white text-indigo-700 font-bold shadow-sm flex items-center gap-1.5 transition-all';
+                    } else {
+                        btn.className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5';
+                    }
+                }
+            });
+            fetchLogsData();
+        }
+
+        // Refresh Data
+        function refreshData() {
+            const icon = document.getElementById('refreshIcon');
+            if (icon) icon.classList.add('fa-spin');
+            fetchLogsData().finally(() => {
+                if (icon) icon.classList.remove('fa-spin');
+            });
+        }
+
+        // Fetch Main Logs Data
+        async function fetchLogsData() {
+            try {
+                let url = `api/system_logs.php?mode=${currentMode}&preset=${currentPreset}`;
+                if (currentPreset === 'custom') {
+                    url += `&date_from=${currentCustomFrom}&date_to=${currentCustomTo}`;
+                }
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('ไม่สามารถโหลดข้อมูล Logs ได้');
+                const data = await res.json();
+                rawLogData = data;
+
+                // Update UI Components
+                renderDashboardMetrics(data.summary);
+                renderDepartmentBreakdown(data.summary.by_department);
+                renderActionBreakdown(data.summary.by_action);
+                renderTopUsers(data.summary.top_users);
+                renderTodayFeed(data.today_feed);
+                populateUserFilterDropdown(data.users_list);
+
+                // Populate DataTable
+                renderDataTable(data.logs);
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+            }
+        }
+
+        // Render Dashboard Metrics
+        function renderDashboardMetrics(summary) {
+            if (!summary) return;
+
+            document.getElementById('kpiTotalActions').innerText = Number(summary.total_logs || 0).toLocaleString();
+            document.getElementById('kpiUniqueWorks').innerText = Number(summary.unique_works_count || 0).toLocaleString();
+            document.getElementById('kpiActiveUsers').innerText = Number(summary.active_users_count || 0).toLocaleString();
+            document.getElementById('kpiStatusCount').innerText = Number(summary.by_action?.status || 0).toLocaleString();
+
+            const deleteCount = Number(summary.delete_count || 0);
+            document.getElementById('kpiDeleteCount').innerText = deleteCount.toLocaleString();
+
+            const cardDel = document.getElementById('cardDeletions');
+            const iconDel = document.getElementById('iconDeletions');
+            const labelDel = document.getElementById('labelDeletions');
+            if (deleteCount > 0) {
+                cardDel.className = 'bg-rose-50 rounded-2xl p-5 border border-rose-200 shadow-sm relative overflow-hidden group hover:border-rose-400 transition-all';
+                iconDel.className = 'w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold text-base animate-bounce';
+                labelDel.className = 'mt-2 text-[11px] text-rose-700 font-bold flex items-center gap-1';
+                labelDel.innerHTML = `<i class="fas fa-triangle-exclamation"></i> ตรวจพบการลบงาน ${deleteCount} รายการ!`;
+            } else {
+                cardDel.className = 'bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-slate-300 transition-all';
+                iconDel.className = 'w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-base';
+                labelDel.className = 'mt-2 text-[11px] text-slate-500 font-medium flex items-center gap-1';
+                labelDel.innerHTML = `<i class="fas fa-check-circle text-emerald-500"></i> ไม่พบการลบงาน`;
+            }
+
+            // Update badge for today
+            const badgeToday = document.getElementById('badgeTodayCount');
+            if (badgeToday && summary.today) {
+                badgeToday.innerText = summary.today.total_logs || 0;
+            }
+
+            // Scope label
+            const labelMap = {
+                'today': 'เฉพาะข้อมูลวันนี้',
+                'yesterday': 'ข้อมูลเมื่อวาน',
+                '7days': '7 วันย้อนหลัง',
+                '30days': '30 วันย้อนหลัง',
+                'all': 'ข้อมูลทั้งหมดในระบบ',
+                'custom': `${currentCustomFrom} ถึง ${currentCustomTo}`
+            };
+            document.getElementById('kpiTimeScopeLabel').innerText = labelMap[currentPreset] || 'ในช่วงเวลาที่เลือก';
+        }
+
+        // Render Department Breakdown
+        function renderDepartmentBreakdown(byDept) {
+            const container = document.getElementById('deptBreakdownBars');
+            if (!container || !byDept) return;
+
+            const total = Object.values(byDept).reduce((a, b) => a + b, 0) || 1;
+            document.getElementById('deptTotalLabel').innerText = `${total.toLocaleString()} รายการ`;
+
+            let html = '';
+            for (const [dept, count] of Object.entries(byDept)) {
+                const conf = DEPT_MAP[dept] || { text: dept, icon: 'fa-cube', color: 'slate', barCol: 'bg-slate-500' };
+                const percent = Math.round((count / total) * 100);
+                html += `
+                    <div>
+                        <div class="flex justify-between items-center text-xs font-semibold mb-1">
+                            <span class="text-slate-700 flex items-center gap-1.5"><i class="fas ${conf.icon} text-${conf.color}-500 text-xs"></i> ${conf.text}</span>
+                            <span class="text-slate-500">${count.toLocaleString()} (${percent}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div class="${conf.barCol} h-2 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        // Render Action Breakdown
+        function renderActionBreakdown(byAction) {
+            const container = document.getElementById('actionBreakdownBars');
+            if (!container || !byAction) return;
+
+            const total = Object.values(byAction).reduce((a, b) => a + b, 0) || 1;
+            document.getElementById('actionTotalLabel').innerText = `${total.toLocaleString()} รายการ`;
+
+            const actionConfig = {
+                'status': { label: 'เปลี่ยนสถานะ (Status)', color: 'bg-amber-500', textCol: 'text-amber-700' },
+                'update': { label: 'แก้ไขข้อมูล (Update)', color: 'bg-blue-600', textCol: 'text-blue-700' },
+                'add': { label: 'เพิ่มงานใหม่ (Add)', color: 'bg-emerald-500', textCol: 'text-emerald-700' },
+                'delete': { label: 'ลบข้อมูล (Delete)', color: 'bg-rose-500', textCol: 'text-rose-700' },
+                'other': { label: 'อื่นๆ / กิจกรรม', color: 'bg-slate-400', textCol: 'text-slate-600' }
+            };
+
+            let html = '';
+            for (const [actKey, conf] of Object.entries(actionConfig)) {
+                const count = byAction[actKey] || 0;
+                const percent = Math.round((count / total) * 100);
+                html += `
+                    <div>
+                        <div class="flex justify-between items-center text-xs font-semibold mb-1">
+                            <span class="text-slate-700">${conf.label}</span>
+                            <span class="text-slate-500">${count.toLocaleString()} (${percent}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div class="${conf.color} h-2 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        // Render Top Users Ranking
+        function renderTopUsers(topUsers) {
+            const container = document.getElementById('topUsersList');
+            if (!container) return;
+
+            if (!topUsers || topUsers.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 py-3 text-center">ไม่มีข้อมูลผู้ใช้งาน</p>';
+                return;
+            }
+
+            let html = '';
+            topUsers.forEach((item, index) => {
+                const rankBadge = index === 0 ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                                  index === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
+                                  index === 2 ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-slate-50 text-slate-500 border-slate-200';
+
+                html += `
+                    <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-indigo-50/40 transition-colors border border-slate-100">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold border ${rankBadge}">${index + 1}</span>
+                            <span class="text-xs font-semibold text-slate-700 truncate">${item.user || 'ระบบ'}</span>
+                        </div>
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md whitespace-nowrap">
+                            ${item.count.toLocaleString()} ครั้ง
+                        </span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Render Today's Live Audit Feed
+        function renderTodayFeed(feedGroups) {
+            const container = document.getElementById('todayFeedContainer');
+            const badgeCount = document.getElementById('badgeTodayFeedCount');
+            if (!container) return;
+
+            if (!feedGroups || feedGroups.length === 0) {
+                badgeCount.innerText = '0 เรื่อง';
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                            <i class="fas fa-check-double text-lg"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-600">ไม่มีการปรับปรุงงานในวันนี้</p>
+                        <p class="text-xs text-slate-400 mt-0.5">ทุกฝ่ายยังไม่มีการบันทึกสถานะใหม่หรือแก้ไขเรื่องในวันปัจจุบัน</p>
+                    </div>
+                `;
+                return;
+            }
+
+            badgeCount.innerText = `${feedGroups.length} เรื่อง`;
+
+            let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+            feedGroups.forEach(item => {
+                const deptConf = DEPT_MAP[item.module] || { text: item.module, icon: 'fa-cube', bg: 'bg-slate-50', textCol: 'text-slate-700', border: 'border-slate-200' };
+                const meta = item.work_meta || {};
+                const workSeq = meta.received_seq || (item.ref_id ? `ID: ${item.ref_id}` : 'ไม่ระบุเลขรับ');
+                const subject = meta.subject || 'ไม่ระบุประเภทงาน';
+                const applicant = meta.applicant || '-';
+                const staff = meta.responsible_staff || '-';
+
+                // Format changes
+                let eventsHtml = '';
+                item.events.forEach(ev => {
+                    const diffHtml = formatDiffBadges(ev.details, ev.old_value, ev.new_value);
+                    eventsHtml += `
+                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1">
+                            <div class="flex items-center justify-between text-slate-500 text-[11px]">
+                                <span class="font-semibold text-slate-700 flex items-center gap-1">
+                                    <i class="fas fa-user-circle text-indigo-500"></i> ${ev.user}
+                                </span>
+                                <span><i class="far fa-clock mr-1"></i> ${ev.time} น.</span>
+                            </div>
+                            <div class="mt-1">${diffHtml}</div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                        <div>
+                            <!-- Header of Card -->
+                            <div class="flex items-start justify-between gap-2 pb-3 border-b border-slate-100">
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold ${deptConf.bg} ${deptConf.textCol} border ${deptConf.border}">
+                                            <i class="fas ${deptConf.icon}"></i> ${deptConf.text}
+                                        </span>
+                                        ${item.ref_id ? `
+                                            <a href="index.html?open_dept=${item.module}&open_id=${item.ref_id}" target="_blank" class="inline-flex items-center gap-1 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-indigo-600 hover:text-white px-2 py-0.5 rounded-md border border-slate-200 transition-all shadow-xs group" title="คลิกเพื่อเปิดดูรายละเอียดงานนี้ในหน้าแรก (index.html)">
+                                                <span>${workSeq}</span>
+                                                <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-60 group-hover:opacity-100"></i>
+                                            </a>
+                                        ` : `<span class="text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">${workSeq}</span>`}
+                                    </div>
+                                    <h4 class="text-sm font-bold text-slate-800 leading-tight">${subject}</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">ผู้ขอ: <span class="font-semibold text-slate-700">${applicant}</span> ${staff !== '-' ? `| ช่าง: <span class="font-semibold text-slate-700">${staff}</span>` : ''}</p>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap">
+                                    แก้ ${item.edits_count} ครั้ง
+                                </span>
+                            </div>
+
+                            <!-- Events List -->
+                            <div class="py-3 space-y-2">
+                                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">ความเคลื่อนไหววันนี้:</span>
+                                ${eventsHtml}
+                            </div>
+                        </div>
+
+                        <!-- Card Action -->
+                        <div class="pt-2 border-t border-slate-100 flex items-center gap-2">
+                            <button onclick="openItemHistoryModal('${item.module}', '${item.ref_id}')" class="flex-1 py-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                                <i class="fas fa-magnifying-glass"></i> ดูประวัติงาน (Audit Trail)
+                            </button>
+                            ${item.ref_id ? `
+                                <a href="index.html?open_dept=${item.module}&open_id=${item.ref_id}" target="_blank" class="py-2 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 shadow-sm whitespace-nowrap" title="เปิดดูรายละเอียดในหน้าแรก">
+                                    <i class="fas fa-arrow-up-right-from-square text-indigo-600"></i> หน้าแรก
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            container.innerHTML = html;
+        }
+
+        // Toggle Today Feed View
+        function toggleTodayFeedView() {
+            const container = document.getElementById('todayFeedContainer');
+            const btn = document.getElementById('btnToggleTodayFeed');
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i> ซ่อน/แสดง';
+            } else {
+                container.classList.add('hidden');
+                btn.innerHTML = '<i class="fas fa-eye"></i> แสดงรายการ';
+            }
+        }
+
+        // Format Diff Badges (Visual Pills)
+        function formatDiffBadges(detailsStr, oldValue, newValue) {
+            if (!detailsStr) return '<span class="text-slate-400">-</span>';
+
+            let parts = [];
+            if (detailsStr.includes(' | ')) {
+                parts = detailsStr.split(' | ');
+            } else {
+                parts = [detailsStr];
+            }
+
+            let html = '';
+            parts.forEach(part => {
+                const trimmed = part.trim();
+                if (trimmed.includes('->')) {
+                    const commaParts = trimmed.split(',');
+                    commaParts.forEach(cp => {
+                        const cTrim = cp.trim();
+                        if (cTrim.includes('->')) {
+                            const splitArrow = cTrim.split('->');
+                            const left = splitArrow[0].trim();
+                            const right = splitArrow[1].trim();
+
+                            let fieldName = 'การเปลี่ยนแปลง';
+                            let oldVal = left;
+                            if (left.includes(':')) {
+                                const splitColon = left.split(':');
+                                fieldName = splitColon[0].trim();
+                                oldVal = splitColon.slice(1).join(':').trim();
+                            }
+
+                            let colorTheme = 'amber';
+                            if (fieldName.includes('วันที่')) colorTheme = 'blue';
+                            else if (fieldName.includes('รว.12')) colorTheme = 'purple';
+                            else if (fieldName.includes('สถานะ')) colorTheme = 'emerald';
+                            else if (fieldName.includes('วันรังวัด')) colorTheme = 'indigo';
+
+                            html += `
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-medium bg-${colorTheme}-50 text-${colorTheme}-800 border border-${colorTheme}-200 mr-1.5 mb-1 shadow-xs">
+                                    <span class="text-slate-500 font-semibold">${fieldName}:</span>
+                                    <span class="line-through text-slate-400">${oldVal || '-'}</span>
+                                    <i class="fas fa-arrow-right text-[10px] text-${colorTheme}-600"></i>
+                                    <span class="font-bold text-${colorTheme}-700">${right || '-'}</span>
+                                </span>
+                            `;
+                        } else if (cTrim !== '') {
+                            html += `<span class="inline-block text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md mr-1 mb-1">${cTrim}</span>`;
+                        }
+                    });
+                } else {
+                    html += `<div class="text-xs text-slate-600 mt-0.5 leading-relaxed">${trimmed}</div>`;
+                }
+            });
+            return html;
+        }
+
+        // Populate User Filter Dropdown
+        function populateUserFilterDropdown(usersList) {
+            const select = document.getElementById('filterUserSelect');
+            if (!select || !usersList) return;
+
+            const currentVal = select.value;
+            let options = '<option value="all">ผู้ใช้งานทุกคน</option>';
+            usersList.forEach(u => {
+                if (u) {
+                    options += `<option value="${u}">${u}</option>`;
+                }
+            });
+            select.innerHTML = options;
+            if (currentVal && usersList.includes(currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        // Apply Client-Side Filter on DataTables
+        function applyFilters() {
+            if (!dataTable) return;
+            dataTable.draw();
+        }
+
+        function resetFilters() {
+            document.getElementById('filterDept').value = 'all';
+            document.getElementById('filterUserSelect').value = 'all';
+            document.getElementById('filterActionSelect').value = 'all';
+            if (dataTable) {
+                dataTable.search('').draw();
+            }
+        }
+
+        // Custom DataTables filter extension
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex, rowData) {
+            const item = rowData || (settings.aoData && settings.aoData[dataIndex] ? settings.aoData[dataIndex]._aData : null);
+            if (!item) return true;
+
+            const deptFilter = document.getElementById('filterDept')?.value || 'all';
+            const userFilter = document.getElementById('filterUserSelect')?.value || 'all';
+            const actionFilter = document.getElementById('filterActionSelect')?.value || 'all';
+
+            // Check department
+            if (deptFilter !== 'all' && item.module !== deptFilter) {
+                return false;
+            }
+
+            // Check user
+            if (userFilter !== 'all' && item.user !== userFilter) {
+                return false;
+            }
+
+            // Check action
+            if (actionFilter !== 'all') {
+                const rowActionCat = (item.action_category || '').toUpperCase();
+                const rowAction = (item.action || '').toUpperCase();
+                if (rowActionCat !== actionFilter && rowAction !== actionFilter) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        // Render DataTables
+        function renderDataTable(logsList) {
+            if (dataTable) {
+                dataTable.clear();
+                dataTable.rows.add(logsList || []);
+                dataTable.draw();
+                return;
+            }
+
+            dataTable = $('#logsTable').DataTable({
+                data: logsList || [],
+                columns: [
+                    // Column 0: Date/Time
+                    {
+                        data: 'log_date',
+                        defaultContent: '-',
+                        render: function(data, type, row) {
+                            if (!data) return '-';
+                            if (type === 'display') {
+                                const d = parseDateSafely(data);
+                                const dateFormatted = d ? d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : data;
+                                const timeFormatted = d ? d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+
+                                const todayStr = new Date().toISOString().split('T')[0];
+                                const isToday = data.startsWith(todayStr);
+
+                                return `
+                                    <div class="whitespace-nowrap">
+                                        <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                                            <span>${dateFormatted}</span>
+                                            ${isToday ? '<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700">วันนี้</span>' : ''}
+                                        </div>
+                                        <div class="text-[11px] text-slate-400 font-mono"><i class="far fa-clock mr-1 text-[10px]"></i>${timeFormatted} น.</div>
+                                    </div>
+                                `;
+                            }
+                            return data;
+                        }
+                    },
+                    // Column 1: Department
+                    {
+                        data: 'module',
+                        defaultContent: '-',
+                        render: function(data) {
+                            const conf = DEPT_MAP[data] || { text: data || '-', icon: 'fa-cube', bg: 'bg-slate-50', textCol: 'text-slate-600', border: 'border-slate-200' };
+                            return `
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${conf.bg} ${conf.textCol} border ${conf.border} whitespace-nowrap">
+                                    <i class="fas ${conf.icon} text-[11px]"></i> ${conf.text}
+                                </span>
+                            `;
+                        }
+                    },
+                    // Column 2: Work Target
+                    {
+                        data: 'work_meta',
+                        defaultContent: '',
+                        render: function(data, type, row) {
+                            const seq = (data && data.received_seq) ? data.received_seq : (row.ref_id ? `ID: ${row.ref_id}` : '-');
+                            const openLink = (row.ref_id && row.module && row.module !== 'security') ?
+                                `index.html?open_dept=${row.module}&open_id=${row.ref_id}` : null;
+
+                            const badgeHtml = openLink ? `
+                                <a href="${openLink}" target="_blank" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-600 hover:text-white px-2 py-0.5 rounded-lg border border-indigo-200 transition-all shadow-xs group" title="คลิกเพื่อเปิดดูรายละเอียดงานนี้ในหน้าแรก (index.html)">
+                                    <span>${seq}</span>
+                                    <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-70 group-hover:opacity-100"></i>
+                                </a>
+                            ` : `<span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">${seq}</span>`;
+
+                            if (data) {
+                                const subject = data.subject || '-';
+                                const applicant = data.applicant || '-';
+                                const staff = data.responsible_staff || '';
+
+                                return `
+                                    <div class="max-w-[240px]">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            ${badgeHtml}
+                                            <span class="text-xs font-semibold text-slate-800 truncate" title="${subject}">${subject}</span>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 truncate mt-0.5">ผู้ขอ: <span class="font-medium text-slate-700">${applicant}</span></div>
+                                        ${staff ? `<div class="text-[10px] text-slate-400 truncate">ช่าง/ผู้รับผิดชอบ: ${staff}</div>` : ''}
+                                    </div>
+                                `;
+                            } else if (row.ref_id) {
+                                return `
+                                    <div>
+                                        ${badgeHtml}
+                                        <div class="text-[10px] text-slate-400 mt-0.5">(ไม่พบข้อมูลงานหรือถูกลบ)</div>
+                                    </div>
+                                `;
+                            }
+                            return `<span class="text-xs text-slate-400">ระบบทั่วไป</span>`;
+                        }
+                    },
+                    // Column 3: User
+                    {
+                        data: 'user',
+                        defaultContent: 'ระบบ',
+                        render: function(data) {
+                            const isSystem = !data || data === 'System' || data === 'ระบบ';
+                            return `
+                                <div class="flex items-center gap-2 whitespace-nowrap">
+                                    <div class="w-6 h-6 rounded-full ${isSystem ? 'bg-slate-100 text-slate-400' : 'bg-indigo-100 text-indigo-600'} flex items-center justify-center text-[10px]">
+                                        <i class="fas ${isSystem ? 'fa-robot' : 'fa-user'}"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-800">${data || 'ระบบ'}</span>
+                                </div>
+                            `;
+                        }
+                    },
+                    // Column 4: Action Badge
+                    {
+                        data: 'action',
+                        defaultContent: 'ACTION',
+                        render: function(data, type, row) {
+                            const actCat = row.action_category || 'other';
+                            const badgeMap = {
+                                'status': { text: data || 'อัปเดตสถานะ', bg: 'bg-amber-50', textCol: 'text-amber-700', border: 'border-amber-200', icon: 'fa-tags' },
+                                'update': { text: data || 'แก้ไขข้อมูล', bg: 'bg-blue-50', textCol: 'text-blue-700', border: 'border-blue-200', icon: 'fa-pen-to-square' },
+                                'add': { text: data || 'เพิ่มงานใหม่', bg: 'bg-emerald-50', textCol: 'text-emerald-700', border: 'border-emerald-200', icon: 'fa-plus-circle' },
+                                'delete': { text: data || 'ลบงาน', bg: 'bg-rose-50', textCol: 'text-rose-700', border: 'border-rose-200', icon: 'fa-trash-can' },
+                                'other': { text: data || 'กิจกรรม', bg: 'bg-slate-50', textCol: 'text-slate-600', border: 'border-slate-200', icon: 'fa-cube' }
+                            };
+                            const mapping = badgeMap[actCat] || badgeMap['other'];
+                            return `
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${mapping.bg} ${mapping.textCol} border ${mapping.border} whitespace-nowrap">
+                                    <i class="fas ${mapping.icon} text-[10px]"></i> ${mapping.text}
+                                </span>
+                            `;
+                        }
+                    },
+                    // Column 5: Diff Details
+                    {
+                        data: 'details',
+                        defaultContent: '-',
+                        render: function(data, type, row) {
+                            return formatDiffBadges(data, row.old_value, row.new_value);
+                        }
+                    },
+                    // Column 6: Action Button
+                    {
+                        data: null,
+                        defaultContent: '',
+                        orderable: false,
+                        render: function(data, type, row) {
+                            if (row.ref_id && row.module && row.module !== 'security') {
+                                return `
+                                    <div class="flex items-center gap-1 whitespace-nowrap">
+                                        <button onclick="openItemHistoryModal('${row.module}', '${row.ref_id}')" class="px-2 py-1 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-600 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1 shadow-xs" title="ดูประวัติย้อนหลังทั้งหมดของงานนี้">
+                                            <i class="fas fa-timeline text-[10px]"></i> ไทม์ไลน์
+                                        </button>
+                                        <a href="index.html?open_dept=${row.module}&open_id=${row.ref_id}" target="_blank" class="p-1 px-1.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-lg text-[11px] font-semibold transition-all flex items-center justify-center shadow-xs" title="คลิกเพื่อเปิดดูรายละเอียดงานนี้ในหน้าแรก (index.html)">
+                                            <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
+                                        </a>
+                                    </div>
+                                `;
+                            }
+                            return `<span class="text-slate-300 text-xs">-</span>`;
+                        }
+                    }
+                ],
+                order: [[0, 'desc']],
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/th.json",
+                    search: "ค้นหาด่วน:",
+                    searchPlaceholder: "เลขรับ, ผู้ขอ, ช่าง, ผู้ใช้, สถานะ..."
+                },
+                pageLength: 25,
+                responsive: false,
+                autoWidth: false
+            });
+        }
+
+        // ========================================================
+        // ITEM AUDIT TRAIL MODAL (ตามงานรายเรื่องแบบละเอียด)
+        // ========================================================
+        async function openItemHistoryModal(module, refId) {
+            if (!module || !refId) return;
+
+            const modal = document.getElementById('itemHistoryModal');
+            const workCard = document.getElementById('modalWorkCard');
+            const timelineList = document.getElementById('modalTimelineList');
+            const countLabel = document.getElementById('modalTimelineCount');
+            const deptBadge = document.getElementById('modalDeptBadge');
+
+            const deptConf = DEPT_MAP[module] || { text: module };
+            deptBadge.innerText = deptConf.text;
+
+            workCard.innerHTML = '<div class="py-6 text-center text-slate-400"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p class="text-xs">กำลังโหลดข้อมูลงาน...</p></div>';
+            timelineList.innerHTML = '';
+            modal.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`api/system_logs.php?action=item_history&module=${module}&ref_id=${refId}`);
+                if (!res.ok) throw new Error('ไม่สามารถดึงข้อมูลประวัติงานได้');
+                const data = await res.json();
+
+                const work = data.work || {};
+                const timeline = data.timeline || [];
+
+                // Work Card Overview
+                const seq = work.received_seq || work.seq_no || `ID: ${refId}`;
+                const subject = work.survey_type || work.subject || 'ไม่ระบุประเภทงาน';
+                const applicant = work.applicant || work.related_person || '-';
+                const staff = work.men || work.responsible_person || '-';
+                const rv12 = work.rv_12 || '-';
+                const currentStatus = work.status_cause || '-';
+                const completionDate = work.completion_date || '-';
+                const surveyDate = work.survey_date || '-';
+
+                workCard.innerHTML = `
+                    <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm">${seq}</span>
+                                <span class="text-xs font-semibold text-slate-500">${deptConf.text}</span>
+                            </div>
+                            <h3 class="text-base font-extrabold text-slate-800">${subject}</h3>
+                            <p class="text-xs text-slate-600 mt-1">เจ้าของเรื่อง/ผู้ขอ: <span class="font-bold text-slate-800">${applicant}</span></p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-bold text-slate-400 block mb-1">สถานะปัจจุบัน</span>
+                            <span class="px-3 py-1 rounded-xl text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                ${currentStatus}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 text-xs">
+                        <div class="bg-slate-50 p-2.5 rounded-xl">
+                            <span class="text-slate-400 text-[10px] block font-bold uppercase">ผู้รับผิดชอบ/ช่าง</span>
+                            <span class="font-bold text-slate-700">${staff}</span>
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-xl">
+                            <span class="text-slate-400 text-[10px] block font-bold uppercase">รว.12</span>
+                            <span class="font-bold text-slate-700">${rv12}</span>
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-xl">
+                            <span class="text-slate-400 text-[10px] block font-bold uppercase">วันนัดรังวัด</span>
+                            <span class="font-bold text-slate-700">${surveyDate}</span>
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-xl">
+                            <span class="text-slate-400 text-[10px] block font-bold uppercase">วันที่แล้วเสร็จ</span>
+                            <span class="font-bold text-slate-700">${completionDate}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Render Timeline
+                countLabel.innerText = `ทั้งหมด ${timeline.length} เหตุการณ์`;
+
+                if (timeline.length === 0) {
+                    timelineList.innerHTML = '<div class="py-8 text-center text-slate-400 text-xs">ไม่มีบันทึกประวัติการเปลี่ยนแปลง</div>';
+                    return;
+                }
+
+                let timelineHtml = '';
+                timeline.forEach((event, index) => {
+                    const d = parseDateSafely(event.timestamp);
+                    const dateStr = d ? d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : event.timestamp;
+                    const timeStr = d ? d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+                    const diffBadges = formatDiffBadges(event.note || event.activity_details, event.old_value, event.new_value);
+
+                    timelineHtml += `
+                        <div class="timeline-item relative flex items-start gap-4 pb-5">
+                            <div class="w-10 h-10 rounded-full bg-white border-2 border-indigo-500 shadow-sm flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0 z-10">
+                                ${timeline.length - index}
+                            </div>
+                            <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex-1 space-y-2">
+                                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-slate-800"><i class="fas fa-user-circle text-indigo-600 mr-1"></i>${event.user}</span>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">${event.action}</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 font-mono">
+                                        <i class="far fa-calendar-alt mr-1"></i> ${dateStr} <span class="mx-1">|</span> <i class="far fa-clock mr-1"></i> ${timeStr} น.
+                                    </div>
+                                </div>
+                                <div class="pt-1">
+                                    ${diffBadges}
+                                </div>
+                                ${event.activity_details && event.activity_details !== event.note ? `<div class="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-lg mt-1"><i class="fas fa-info-circle text-slate-400 mr-1"></i>${event.activity_details}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                timelineList.innerHTML = timelineHtml;
+
+            } catch (err) {
+                console.error(err);
+                workCard.innerHTML = `<div class="p-4 text-center text-rose-500 text-xs font-bold">${err.message}</div>`;
+            }
+        }
+
+        function closeItemHistoryModal() {
+            document.getElementById('itemHistoryModal').classList.add('hidden');
+        }
+
+        // Print Item Audit Trail
+        function printItemAuditTrail() {
+            const printContent = document.getElementById('itemHistoryContent').innerHTML;
+            const printWindow = window.open('', '', 'width=900,height=700');
+            printWindow.document.write('<!DOCTYPE html><html><head><title>Item Audit Trail Report - สำนักงานที่ดินจังหวัดอ่างทอง</title>' +
+                '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">' +
+                '<style>body{font-family:Sarabun,sans-serif;padding:24px;color:#1e293b;} table{width:100%;border-collapse:collapse;} th,td{padding:8px;border:1px solid #e2e8f0;text-align:left;} th{background:#f8fafc;} .timeline-item{border-left:2px solid #6366f1;padding-left:16px;margin-bottom:16px;} .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:bold;background:#eef2ff;color:#4338ca;margin-right:4px;}</style>' +
+                '</head><body><div style="border-bottom:2px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">' +
+                '<h2 style="margin:0;font-size:18px;">บันทึกประวัติการดำเนินงานรายเรื่อง (Audit Trail Report)</h2>' +
+                '<p style="margin:4px 0 0;font-size:12px;color:#64748b;">สำนักงานที่ดินจังหวัดอ่างทอง - วันที่พิมพ์: ' + new Date().toLocaleString('th-TH') + '</p></div>' +
+                printContent +
+                '</body></html>');
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+            }, 400);
+        }
+
+        // Export Logs to CSV
+        function exportLogsToCSV() {
+            if (!rawLogData || !rawLogData.logs || rawLogData.logs.length === 0) {
+                Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลสำหรับส่งออก', 'info');
+                return;
+            }
+
+            let csvContent = "\uFEFFวันเวลา,ฝ่าย,เลขรับ,เรื่อง/ประเภทงาน,ผู้ขอ,ช่าง/ผู้รับผิดชอบ,ผู้ดำเนินการ,การกระทำ,รายละเอียดการเปลี่ยนแปลง\n";
+
+            rawLogData.logs.forEach(l => {
+                const meta = l.work_meta || {};
+                const date = `"${l.log_date || ''}"`;
+                const dept = `"${DEPT_MAP[l.module]?.text || l.module || ''}"`;
+                const seq = `"${meta.received_seq || l.ref_id || ''}"`;
+                const subject = `"${(meta.subject || '').replace(/"/g, '""')}"`;
+                const applicant = `"${(meta.applicant || '').replace(/"/g, '""')}"`;
+                const staff = `"${(meta.responsible_staff || '').replace(/"/g, '""')}"`;
+                const user = `"${(l.user || '').replace(/"/g, '""')}"`;
+                const action = `"${(l.action || '').replace(/"/g, '""')}"`;
+                const details = `"${(l.details || '').replace(/"/g, '""')}"`;
+
+                csvContent += `${date},${dept},${seq},${subject},${applicant},${staff},${user},${action},${details}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `system_audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ang Thong Active Backlog Management (AABM)</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- AOS Animation -->
+    <link href="libs/aos/aos.css?v=2.5" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="libs/sweetalert2/sweetalert2.min.js?v=2.5"></script>
+    <!-- SheetJS (Excel) - deferred, only needed for export -->
+    <script src="libs/sheetjs/xlsx.full.min.js?v=2.5" defer></script>
+    <!-- jsPDF & AutoTable - deferred, only needed for PDF export -->
+    <script src="libs/jspdf/jspdf.umd.min.js?v=2.5" defer></script>
+    <script src="libs/jspdf/jspdf.plugin.autotable.min.js?v=2.5" defer></script>
+    <!-- html2canvas for PDF screenshot - deferred -->
+    <script src="libs/html2canvas/html2canvas.min.js?v=2.5" defer></script>
+    <script src="libs/chartjs/chart.min.js?v=2.5" defer></script>
+    <!-- jQuery (required for DataTables) -->
+    <script src="libs/jquery/jquery.min.js?v=2.5"></script>
+    <!-- DataTables CSS & JS -->
+    <link rel="stylesheet" href="libs/datatables/jquery.dataTables.min.css?v=2.5">
+    <link rel="stylesheet" href="libs/datatables/responsive.dataTables.min.css?v=2.5">
+    <script src="libs/datatables/jquery.dataTables.min.js?v=2.5"></script>
+    <script src="libs/datatables/dataTables.responsive.min.js?v=2.5"></script>
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(4px);
+        }
+
+        @keyframes blob {
+            0% {
+                transform: translate(0px, 0px) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0px, 0px) scale(1);
+            }
+        }
+
+        .animate-blob {
+            animation: blob 20s infinite;
+            will-change: auto;
+            transform: translateZ(0);
+        }
+
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+
+        .animation-delay-4000 {
+            animation-delay: 4s;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .animate-blob {
+                animation: none;
+            }
+
+            .animate-progress {
+                animation: none;
+            }
+
+            .card-hover {
+                transition: none;
+            }
+
+            .bounceRight {
+                animation: none;
+            }
+        }
+
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Custom Scrollbar for Tables */
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #f97316 #fed7aa;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #fed7aa;
+            border-radius: 5px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            border-radius: 5px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, #ea580c, #c2410c);
+        }
+
+        /* --- Ultimate Dashboard Styles --- */
+        .glass-premium {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        .gradient-emerald {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .gradient-indigo {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
+        .gradient-amber {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .gradient-rose {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        }
+
+        .gradient-teal {
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        }
+
+        .text-gradient-indigo {
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Progress ring animation */
+        @keyframes progress {
+            0% {
+                stroke-dasharray: 0 100;
+            }
+        }
+
+        .animate-progress {
+            animation: progress 1.5s ease-out forwards;
+        }
+
+        /* --- End Ultimate Dashboard Styles --- */
+
+        /* Scroll Shadow Effect */
+        .table-scroll-container {
+            position: relative;
+        }
+
+        .table-scroll-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 10px;
+            width: 60px;
+            background: linear-gradient(to left, rgba(255, 255, 255, 0.95), transparent);
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .table-scroll-container.scrolled-end::after {
+            opacity: 0;
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+            animation: bounceRight 1.5s infinite;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @keyframes bounceRight {
+
+            0%,
+            100% {
+                transform: translateY(-50%) translateX(0);
+            }
+
+            50% {
+                transform: translateY(-50%) translateX(5px);
+            }
+        }
+
+        /* DataTables Custom Styling */
+        .dataTables_wrapper {
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            padding: 12px 0;
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-left: 8px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 6px 24px 6px 8px;
+            outline: none;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border: 1px solid #e5e7eb !important;
+            border-radius: 8px !important;
+            padding: 6px 12px !important;
+            margin: 0 2px !important;
+            background: white !important;
+            color: #374151 !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #ecfdf5 !important;
+            border-color: #10b981 !important;
+            color: #059669 !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border-color: #059669 !important;
+            color: white !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        table.dataTable thead th {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5) !important;
+            color: #065f46 !important;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #10b981 !important;
+            padding: 12px 16px !important;
+        }
+
+        table.dataTable tbody tr {
+            transition: all 0.15s;
+        }
+
+        table.dataTable tbody tr:hover {
+            background: #f0fdf4 !important;
+        }
+
+        table.dataTable tbody td {
+            padding: 12px 16px !important;
+            vertical-align: middle;
+            border-bottom: 1px solid #f3f4f6 !important;
+        }
+
+        table.dataTable.stripe tbody tr.odd {
+            background-color: #fafafa;
+        }
+
+        /* Hide default search if using custom */
+        .dt-header-hidden .dataTables_filter,
+        .dt-header-hidden .dataTables_length {
+            display: none;
+        }
+
+        /* 💎 SWEETALERT2 OVERRIDES 💎 */
+        /* Backdrop blur for MODALS ONLY */
+        body:not(.swal2-toast-shown) .swal2-container.swal2-backdrop-show:not(:has(.swal2-toast)) {
+            background: rgba(15, 23, 42, 0.45) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+        }
+
+        /* Container for TOASTS: Always transparent, zero dimming, clicks pass through */
+        body.swal2-toast-shown .swal2-container,
+        .swal2-container:has(.swal2-toast),
+        .swal2-container.swal2-top-end,
+        .swal2-container.swal2-top-start,
+        .swal2-container.swal2-top,
+        .swal2-container.swal2-bottom-end,
+        .swal2-container.swal2-bottom-start,
+        .swal2-container.swal2-bottom {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            pointer-events: none !important;
+        }
+
+        .swal2-popup.swal2-toast {
+            pointer-events: auto !important;
+        }
+
+        /* Main Modal Popup Box (Applies only to Dialogs, NOT Toasts) */
+        .swal2-popup:not(.swal2-toast) {
+            background: rgba(255, 255, 255, 0.98) !important;
+            border: 1px solid rgba(226, 232, 240, 0.9) !important;
+            border-radius: 1.5rem !important;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+            padding: 2.25rem 2rem 1.75rem !important;
+            color: #334155 !important;
+            width: 25em !important;
+            max-width: 92vw !important;
+        }
+
+        /* Modal Title */
+        .swal2-popup:not(.swal2-toast) .swal2-title {
+            font-family: 'Sarabun', sans-serif !important;
+            font-weight: 800 !important;
+            font-size: 1.4rem !important;
+            color: #1e293b !important;
+            padding-top: 0.75rem !important;
+            text-align: center !important;
+        }
+
+        /* Modal Body Content */
+        .swal2-popup:not(.swal2-toast) .swal2-html-container {
+            font-family: 'Sarabun', sans-serif !important;
+            color: #64748b !important;
+            font-size: 0.95rem !important;
+            line-height: 1.6 !important;
+            margin: 0.75rem 0 1.25rem !important;
+            text-align: center !important;
+        }
+
+        /* Modal Icons */
+        .swal2-popup:not(.swal2-toast) .swal2-icon {
+            border: none !important;
+            margin: 0 auto !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4) !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success [class^="swal2-success-line"] {
+            background-color: white !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-ring {
+            border: none !important;
+            background: transparent !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4) !important;
+            color: white !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-warning .swal2-icon-content {
+            color: white !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-error {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
+            box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.4) !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-error [class^="swal2-x-mark-line"] {
+            background-color: white !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-info {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4) !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-info .swal2-icon-content {
+            color: white !important;
+        }
+
+        /* Modal Question Icon */
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-question {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4) !important;
+            color: white !important;
+        }
+
+        .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-question .swal2-icon-content {
+            color: white !important;
+        }
+
+        /* Buttons Action Container */
+        .swal2-popup:not(.swal2-toast) .swal2-actions {
+            gap: 1rem !important;
+            width: 100% !important;
+            margin-top: 1rem !important;
+        }
+
+        /* Confirm Button */
+        .swal2-confirm {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4) !important;
+            font-weight: 700 !important;
+            font-family: 'Sarabun', sans-serif !important;
+            color: white !important;
+            padding: 0.85rem 2rem !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            flex: 1 !important;
+        }
+
+        .swal2-confirm:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 15px 25px -5px rgba(16, 185, 129, 0.5) !important;
+        }
+
+        .swal2-confirm:active {
+            transform: translateY(0) scale(0.96) !important;
+        }
+
+        /* Cancel Button */
+        .swal2-cancel {
+            background: #f1f5f9 !important;
+            color: #475569 !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+            font-weight: 700 !important;
+            font-family: 'Sarabun', sans-serif !important;
+            padding: 0.85rem 2rem !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            flex: 1 !important;
+        }
+
+        .swal2-cancel:hover {
+            background: #e2e8f0 !important;
+            color: #0f172a !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .swal2-cancel:active {
+            transform: translateY(0) scale(0.96) !important;
+        }
+
+        /* Close Button (X) */
+        .swal2-close {
+            color: #cbd5e1 !important;
+            transition: color 0.2s ease !important;
+            margin-top: 5px !important;
+            margin-right: 5px !important;
+        }
+
+        .swal2-close:hover {
+            color: #ef4444 !important;
+        }
+
+        /* 🍞 MODERN SLEEK TOAST NOTIFICATIONS 🍞 */
+        .swal2-popup.swal2-toast {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            width: auto !important;
+            min-width: 220px !important;
+            max-width: 440px !important;
+            padding: 0.7rem 1.15rem !important;
+            background: #ffffff !important;
+            border: 1px solid rgba(226, 232, 240, 0.9) !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.15), 0 6px 12px -4px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.03) !important;
+            margin: 0.75rem 1rem !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            gap: 0.65rem !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-title {
+            font-family: 'Sarabun', sans-serif !important;
+            font-weight: 600 !important;
+            font-size: 0.925rem !important;
+            color: #0f172a !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1.4 !important;
+            white-space: nowrap !important;
+            text-align: left !important;
+            flex: 1 1 auto !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-html-container {
+            font-family: 'Sarabun', sans-serif !important;
+            font-size: 0.825rem !important;
+            color: #64748b !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1.3 !important;
+            text-align: left !important;
+        }
+
+        /* Toast Icons - Scaled & Crisp */
+        .swal2-popup.swal2-toast .swal2-icon {
+            font-size: 0.75rem !important;
+            margin: 0 0.5rem 0 0 !important;
+            align-self: center !important;
+            flex-shrink: 0 !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-icon.swal2-success {
+            border-color: #10b981 !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-icon.swal2-success [class^="swal2-success-line"] {
+            background-color: #10b981 !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-icon.swal2-success .swal2-success-ring {
+            border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-icon.swal2-error {
+            border-color: #ef4444 !important;
+            color: #ef4444 !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-icon.swal2-error [class^="swal2-x-mark-line"] {
+            background-color: #ef4444 !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-icon.swal2-warning {
+            border-color: #f59e0b !important;
+            color: #f59e0b !important;
+        }
+
+        .swal2-popup.swal2-toast .swal2-icon.swal2-info {
+            border-color: #3b82f6 !important;
+            color: #3b82f6 !important;
+        }
+
+        /* Toast Timer Progress Bar */
+        .swal2-popup.swal2-toast .swal2-timer-progress-bar {
+            height: 2.5px !important;
+            background: #10b981 !important;
+        }
+
+        .swal2-popup.swal2-toast:has(.swal2-error) .swal2-timer-progress-bar {
+            background: #ef4444 !important;
+        }
+
+        .swal2-popup.swal2-toast:has(.swal2-warning) .swal2-timer-progress-bar {
+            background: #f59e0b !important;
+        }
+
+        .swal2-popup.swal2-toast:has(.swal2-info) .swal2-timer-progress-bar {
+            background: #3b82f6 !important;
+        }
+
+        /* ===== Announcement Popup ===== */
+        #announcement-popup-backdrop {
+            background: rgba(10, 18, 35, 0.75);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+
+        #announcement-popup-card {
+            animation: popupSlideIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popupSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.88) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        #announcement-scroll-body {
+            scrollbar-width: thin;
+            scrollbar-color: #f59e0b #fef3c7;
+        }
+
+        #announcement-scroll-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #announcement-scroll-body::-webkit-scrollbar-track {
+            background: #fef3c7;
+            border-radius: 4px;
+        }
+
+        #announcement-scroll-body::-webkit-scrollbar-thumb {
+            background: #f59e0b;
+            border-radius: 4px;
+        }
+
+        #btn-announcement-ok {
+            transition: all 0.3s ease;
+        }
+
+        #btn-announcement-ok:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+
+        #btn-announcement-ok:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -6px rgba(16, 185, 129, 0.45);
+        }
+
+        .scroll-progress-track {
+            background: #e2e8f0;
+            border-radius: 99px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .scroll-progress-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #f59e0b, #10b981);
+            transition: width 0.15s ease;
+        }
+
+        /* ===== WCAG 2.1 AAA Accessibility Overrides ===== */
+        :focus-visible {
+            outline: 3px solid #065f46 !important;
+            outline-offset: 2px !important;
+        }
+
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        .text-slate-400, .text-gray-400 {
+            color: #334155 !important;
+        }
+
+        .text-slate-500, .text-gray-500 {
+            color: #1e293b !important;
+        }
+
+        .text-slate-600, .text-gray-600 {
+            color: #0f172a !important;
+        }
+
+        .text-amber-600 {
+            color: #78350f !important;
+        }
+
+        .text-emerald-600 {
+            color: #064e3b !important;
+        }
+
+        .text-indigo-600 {
+            color: #1e1b4b !important;
+        }
+
+        .text-blue-600 {
+            color: #1e3a8a !important;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 h-screen flex flex-col md:flex-row overflow-hidden relative">
+
+    <!-- Skip to content link (WCAG SC 2.4.1) -->
+    <a href="#main-content"
+        class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-5 focus:py-3 focus:bg-emerald-800 focus:text-white focus:rounded-xl focus:shadow-2xl focus:outline-none focus:ring-4 focus:ring-emerald-300 font-bold">
+        ข้ามไปยังเนื้อหาหลัก (Skip to Content)
+    </a>
+
+    <!-- Announcement Popup (shows before login) -->
+    <div id="announcement-popup-backdrop" class="fixed inset-0 z-[200] flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="announcement-popup-title">
+        <div id="announcement-popup-card"
+            class="relative w-full max-w-xl mx-4 bg-white rounded-[2rem] shadow-[0_24px_64px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col"
+            style="max-height: 90vh;">
+
+            <!-- Top accent bar -->
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400">
+            </div>
+
+            <!-- Header -->
+            <div class="px-8 pt-8 pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3 mb-1">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-bullhorn text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                            <span class="text-xs font-bold text-amber-700 uppercase tracking-widest">ประกาศสำคัญ</span>
+                            <span id="announcement-popup-dept-badge" class="hidden"></span>
+                        </div>
+                        <p role="heading" aria-level="2" id="announcement-popup-title" class="text-lg font-extrabold text-slate-900 leading-tight">
+                            ประกาศระบบ
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scroll Body -->
+            <div id="announcement-scroll-body" class="flex-1 overflow-y-auto px-8 py-5"
+                style="min-height:160px; max-height:340px;">
+                <p id="announcement-popup-content" class="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">
+                </p>
+                <!-- Sentinel element: reaching here = read all -->
+                <div id="announcement-scroll-sentinel" class="h-1"></div>
+            </div>
+
+            <!-- Progress + Footer -->
+            <div class="px-8 py-5 border-t border-slate-100 bg-slate-50/60">
+                <!-- Progress bar -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+                        <span id="announcement-scroll-label">
+                            <i class="fas fa-arrow-down mr-1 animate-bounce"></i> เลื่อนอ่านให้ครบก่อนกดตกลง
+                        </span>
+                        <span id="announcement-scroll-pct" class="font-bold text-amber-600">0%</span>
+                    </div>
+                    <div class="scroll-progress-track">
+                        <div id="announcement-scroll-bar" class="scroll-progress-fill" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Accept Checkbox -->
+                <label id="announcement-accept-label"
+                    class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition-all mb-4 group">
+                    <input type="checkbox" id="announcement-accept-check"
+                        class="mt-0.5 w-4 h-4 rounded accent-emerald-500 cursor-pointer flex-shrink-0" aria-label="ข้าพเจ้าได้อ่านและรับทราบประกาศนี้แล้ว" />
+                    <div>
+                        <span class="text-sm font-bold text-slate-700 group-hover:text-emerald-700 transition-colors">
+                            ข้าพเจ้าได้อ่านและรับทราบประกาศนี้แล้ว
+                        </span>
+                        <p class="text-xs text-slate-400 mt-0.5">ถ้าติ๊ก = ประกาศจะแสดงวันละครั้ง | ถ้าไม่ติ๊ก =
+                            แสดงทุกครั้งที่เปิดหน้านี้</p>
+                    </div>
+                </label>
+
+                <div class="flex items-center gap-3">
+                    <div id="announcement-read-badge"
+                        class="hidden flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+                        <i class="fas fa-check-circle"></i> อ่านครบแล้วนะแน่ๆ!
+                    </div>
+                    <div class="flex-1"></div>
+                    <button id="btn-announcement-ok" disabled type="button"
+                        class="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 text-sm"
+                        aria-label="ตกลง รับทราบประกาศแล้ว">
+                        <i class="fas fa-check mr-2"></i> ตกลง รับทราบแล้ว
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background Decoration -->
+    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none" style="contain: strict;">
+        <div
+            class="absolute -top-[10%] -left-[5%] w-[35%] h-[35%] rounded-full bg-emerald-400/15 blur-2xl opacity-60 animate-blob">
+        </div>
+        <div
+            class="absolute -top-[10%] -right-[5%] w-[35%] h-[35%] rounded-full bg-teal-400/15 blur-2xl opacity-60 animate-blob animation-delay-2000">
+        </div>
+        <div
+            class="absolute -bottom-[10%] left-[20%] w-[35%] h-[35%] rounded-full bg-green-400/15 blur-2xl opacity-60 animate-blob animation-delay-4000">
+        </div>
+    </div>
+
+    <!-- Immediate Auth Helpers (Guaranteed to work regardless of app.js loading/cache state) -->
+    <script>
+        function switchLoginRole(role) {
+            const staffSection = document.getElementById('staff-auth-section');
+            const citizenSection = document.getElementById('citizen-auth-section');
+            const tabStaff = document.getElementById('tab-role-staff');
+            const tabCitizen = document.getElementById('tab-role-citizen');
+
+            if (role === 'citizen') {
+                staffSection?.classList.add('hidden');
+                citizenSection?.classList.remove('hidden');
+
+                tabCitizen?.classList.add('bg-white', 'text-sky-700', 'shadow-sm', 'font-bold');
+                tabCitizen?.classList.remove('text-slate-600');
+
+                tabStaff?.classList.remove('bg-white', 'text-emerald-800', 'shadow-sm', 'font-bold');
+                tabStaff?.classList.add('text-slate-600');
+            } else {
+                citizenSection?.classList.add('hidden');
+                staffSection?.classList.remove('hidden');
+
+                tabStaff?.classList.add('bg-white', 'text-emerald-800', 'shadow-sm', 'font-bold');
+                tabStaff?.classList.remove('text-slate-600');
+
+                tabCitizen?.classList.remove('bg-white', 'text-sky-700', 'shadow-sm', 'font-bold');
+                tabCitizen?.classList.add('text-slate-600');
+            }
+        }
+
+        function switchCitizenAuthTab(mode) {
+            const formLogin = document.getElementById('form-citizen-login');
+            const formReg = document.getElementById('form-citizen-register');
+            const tabLogin = document.getElementById('tab-citizen-login');
+            const tabReg = document.getElementById('tab-citizen-register');
+
+            if (mode === 'register') {
+                formLogin?.classList.add('hidden');
+                formReg?.classList.remove('hidden');
+
+                tabReg?.classList.add('bg-white', 'text-sky-700', 'shadow-xs', 'font-bold');
+                tabReg?.classList.remove('text-slate-600');
+
+                tabLogin?.classList.remove('bg-white', 'text-emerald-700', 'shadow-xs', 'font-bold');
+                tabLogin?.classList.add('text-slate-600');
+            } else {
+                formReg?.classList.add('hidden');
+                formLogin?.classList.remove('hidden');
+
+                tabLogin?.classList.add('bg-white', 'text-emerald-700', 'shadow-xs', 'font-bold');
+                tabLogin?.classList.remove('text-slate-600');
+
+                tabReg?.classList.remove('bg-white', 'text-sky-700', 'shadow-xs', 'font-bold');
+                tabReg?.classList.add('text-slate-600');
+            }
+        }
+
+        async function handleCitizenLoginFallback() {
+            const usernameInput = document.getElementById('citizen-login-username');
+            const passInput = document.getElementById('citizen-login-password');
+            const alertBox = document.getElementById('citizen-login-alert');
+            const btn = document.getElementById('btn-citizen-login');
+            const username = usernameInput ? usernameInput.value.trim() : '';
+            const password = passInput ? passInput.value : '';
+
+            if (alertBox) alertBox.classList.add('hidden');
+            if (!username || !password) {
+                if (alertBox) {
+                    alertBox.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
+                    alertBox.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังเข้าสู่ระบบ...';
+            }
+
+            try {
+                const res = await fetch('api/status_tracking_api.php?action=login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    const citizenUser = {
+                        username: result.user.username,
+                        name: result.user.full_name,
+                        role: 'citizen',
+                        department: 'citizen'
+                    };
+                    localStorage.setItem('dol_user', JSON.stringify(citizenUser));
+                    localStorage.setItem('dol_session_timestamp', Date.now().toString());
+                    window.location.href = 'tracking/';
+                } else {
+                    if (alertBox) {
+                        alertBox.textContent = result.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+                        alertBox.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                if (alertBox) {
+                    alertBox.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
+                    alertBox.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-right-to-bracket mr-1"></i> เข้าสู่ระบบติดตามคำขอ';
+                }
+            }
+        }
+
+        async function handleCitizenRegisterFallback() {
+            const usernameInput = document.getElementById('citizen-reg-username');
+            const fullnameInput = document.getElementById('citizen-reg-fullname');
+            const passInput = document.getElementById('citizen-reg-password');
+            const confirmPassInput = document.getElementById('citizen-reg-confirm-password');
+            const pdpaCheckbox = document.getElementById('citizen-reg-pdpa');
+            const alertBox = document.getElementById('citizen-reg-alert');
+            const btn = document.getElementById('btn-citizen-reg');
+
+            const username = usernameInput ? usernameInput.value.trim() : '';
+            const full_name = fullnameInput ? fullnameInput.value.trim() : '';
+            const password = passInput ? passInput.value : '';
+            const confirm_password = confirmPassInput ? confirmPassInput.value : '';
+            const pdpa_consent = pdpaCheckbox ? pdpaCheckbox.checked : false;
+
+            if (alertBox) alertBox.classList.add('hidden');
+            if (!username || !full_name || !password) {
+                if (alertBox) {
+                    alertBox.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง';
+                    alertBox.classList.remove('hidden');
+                }
+                return;
+            }
+            if (!pdpa_consent) {
+                if (alertBox) {
+                    alertBox.textContent = 'กรุณาอ่านข้อกำหนดและนโยบาย PDPA ก่อน';
+                    alertBox.classList.remove('hidden');
+                }
+                return;
+            }
+            if (password !== confirm_password) {
+                if (alertBox) {
+                    alertBox.textContent = 'รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน';
+                    alertBox.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังสร้างบัญชีผู้ใช้งาน...';
+            }
+
+            try {
+                const res = await fetch('api/status_tracking_api.php?action=register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, full_name, password, confirm_password, pdpa_consent })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    const citizenUser = {
+                        username: result.username,
+                        name: result.full_name,
+                        role: 'citizen',
+                        department: 'citizen'
+                    };
+                    localStorage.setItem('dol_user', JSON.stringify(citizenUser));
+                    localStorage.setItem('dol_session_timestamp', Date.now().toString());
+                    window.location.href = 'tracking/';
+                } else {
+                    if (alertBox) {
+                        alertBox.textContent = result.error || 'ไม่สามารถลงทะเบียนได้';
+                        alertBox.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                if (alertBox) {
+                    alertBox.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
+                    alertBox.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-user-plus mr-1"></i> ยืนยันการสมัครสมาชิก';
+                }
+            }
+        }
+
+        window.switchLoginRole = switchLoginRole;
+        window.switchCitizenAuthTab = switchCitizenAuthTab;
+        window.handleCitizenLoginFallback = handleCitizenLoginFallback;
+        window.handleCitizenRegisterFallback = handleCitizenRegisterFallback;
+
+        window.app = window.app || {};
+        window.app.switchLoginRole = switchLoginRole;
+        window.app.switchCitizenAuthTab = switchCitizenAuthTab;
+
+        function showAdminMenuPopup() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'การจัดการระบบ (Admin)',
+                    html: `
+                        <div class="space-y-4 mt-6">
+                            <a href="admin_settings.html" class="block w-full p-4 border border-emerald-100 rounded-2xl hover:bg-emerald-50 hover:border-emerald-200 transition-all text-left flex items-center group bg-white shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300 border border-emerald-100/50">
+                                    <i class="fas fa-shield-alt text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-sm md:text-base">ตั้งค่าระดับสูง (Admin Settings)</h3>
+                                    <p class="text-xs text-slate-500 font-medium mt-1">จัดการระบบ Lockdown, สิทธิ์หมวดหมู่งาน และประกาศ</p>
+                                </div>
+                            </a>
+
+                            <a href="system_logs.html" class="block w-full p-4 border border-violet-100 rounded-2xl hover:bg-violet-50 hover:border-violet-200 transition-all text-left flex items-center group bg-white shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-gradient-to-br from-violet-100 to-violet-50 text-violet-600 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300 border border-violet-100/50">
+                                    <i class="fas fa-history text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-sm md:text-base">ตรวจสอบประวัติ (Activity Logs)</h3>
+                                    <p class="text-xs text-slate-500 font-medium mt-1">ดูประวัติการใช้งานและกิจกรรมในระบบ</p>
+                                </div>
+                            </a>
+
+                            <a href="admin_backlog_summary.html" class="block w-full p-4 border border-indigo-100 rounded-2xl hover:bg-indigo-50 hover:border-indigo-200 transition-all text-left flex items-center group bg-white shadow-sm hover:shadow-md">
+                                <div class="w-12 h-12 bg-gradient-to-br from-indigo-100 to-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300 border border-indigo-100/50">
+                                    <i class="fas fa-chart-line text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-sm md:text-base">งานค้างผู้ตรวจ (Admin Backlog Summary)</h3>
+                                    <p class="text-xs text-slate-500 font-medium mt-1">สรุปรายงานงานค้างประจำเดือนและรายปี</p>
+                                </div>
+                            </a>
+                        </div>
+                    `,
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    focusCancel: false,
+                    customClass: {
+                        popup: 'rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-white/50 bg-slate-50/95 backdrop-blur-2xl p-6 !w-full !max-w-md',
+                        title: 'text-2xl font-extrabold text-slate-800 tracking-tight pt-2',
+                        closeButton: 'text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all rounded-full h-8 w-8 mt-4 mr-4 focus:outline-none focus:ring-0',
+                        htmlContainer: '!m-0 p-2'
+                    }
+                });
+            } else {
+                window.location.href = 'admin_settings.html';
+            }
+        }
+        window.showAdminMenuPopup = showAdminMenuPopup;
+        window.app.showAdminMenuPopup = showAdminMenuPopup;
+    </script>
+
+    <div id="login-overlay"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-md transition-all duration-300" role="dialog" aria-modal="true" aria-label="หน้าต่างเข้าสู่ระบบ">
+
+        <div class="relative w-full max-w-lg p-4 animate-in fade-in zoom-in duration-300">
+            <!-- Main Opaque Card -->
+            <div
+                class="relative bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden"
+                style="background-color: #ffffff !important; color: #0f172a !important;">
+                <!-- Decorative top gradient line -->
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600"></div>
+
+                <div class="text-center mb-6 relative">
+                    <div class="inline-flex items-center justify-center mb-4">
+                        <img src="favicon.png?v=2.0" alt="ตราประจำจังหวัดอ่างทอง" class="w-20 h-20 rounded-full shadow-lg object-contain hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-1" style="color: #0f172a !important;">
+                        เข้าใช้งานระบบ AABM
+                    </h1>
+                    <p class="text-emerald-800 text-xs font-extrabold tracking-widest uppercase">Ang Thong Active Backlog Management</p>
+                    <p class="text-slate-600 mt-1 text-xs font-medium">สำนักงานที่ดินจังหวัดอ่างทอง</p>
+                </div>
+
+                <!-- Role Selector Tabs: Staff vs Citizen -->
+                <div class="flex items-center p-1.5 bg-slate-100 rounded-2xl mb-6 border border-slate-200/80">
+                    <button type="button" onclick="switchLoginRole('staff')" id="tab-role-staff"
+                        class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-white text-emerald-800 shadow-sm">
+                        <i class="fas fa-id-badge text-emerald-600"></i>
+                        <span>เจ้าหน้าที่สำนักงาน</span>
+                    </button>
+                    <button type="button" onclick="switchLoginRole('citizen')" id="tab-role-citizen"
+                        class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900">
+                        <i class="fas fa-users text-sky-600"></i>
+                        <span>ประชาชน (Smart Track)</span>
+                    </button>
+                </div>
+
+                <!-- ================= 1. STAFF LOGIN SECTION ================= -->
+                <div id="staff-auth-section">
+                    <form id="login-form" onsubmit="event.preventDefault(); app.login();">
+                        <div class="space-y-4">
+                            <div class="group relative text-left">
+                                <label for="username" class="block text-xs font-extrabold text-slate-800 mb-1">ชื่อผู้ใช้งานเจ้าหน้าที่ (Username)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-500 z-10 w-10 justify-center">
+                                        <i class="fas fa-user text-sm"></i>
+                                    </div>
+                                    <input type="text" id="username" name="username"
+                                        class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 shadow-sm focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-all outline-none text-sm font-bold"
+                                        placeholder="กรอกชื่อผู้ใช้งานเจ้าหน้าที่" aria-label="ชื่อผู้ใช้งาน (Username)" required>
+                                </div>
+                            </div>
+
+                            <div class="group relative text-left">
+                                <label for="password" class="block text-xs font-extrabold text-slate-800 mb-1">รหัสผ่าน (Password)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-500 z-10 w-10 justify-center">
+                                        <i class="fas fa-lock text-sm"></i>
+                                    </div>
+                                    <input type="password" id="password" name="password"
+                                        class="w-full pl-11 pr-11 py-3 rounded-2xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 shadow-sm focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-all outline-none text-sm font-bold"
+                                        placeholder="กรอกรหัสผ่าน" aria-label="รหัสผ่าน (Password)" required>
+                                    <button type="button" onclick="app.togglePasswordVisibility('password', this)" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="staff-login-alert" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium text-left"></div>
+
+                            <div class="pt-2">
+                                <button type="submit" id="btn-staff-login"
+                                    class="relative w-full bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-98 transition-all duration-200 flex items-center justify-center group overflow-hidden">
+                                    <span class="relative z-10 flex items-center gap-2">
+                                        <span>เข้าสู่ระบบเจ้าหน้าที่</span>
+                                        <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ================= 2. CITIZEN AUTH SECTION ================= -->
+                <div id="citizen-auth-section" class="hidden">
+                    <!-- Citizen Sub-tabs: Login vs Register -->
+                    <div class="flex items-center p-1 bg-slate-100 rounded-xl mb-4 border border-slate-200/70">
+                        <button type="button" onclick="switchCitizenAuthTab('login')" id="tab-citizen-login"
+                            class="flex-1 py-2 px-3 rounded-lg font-bold text-xs transition-all duration-200 flex items-center justify-center gap-1.5 bg-white text-emerald-700 shadow-xs">
+                            <i class="fas fa-right-to-bracket text-emerald-600"></i>
+                            <span>เข้าสู่ระบบประชาชน</span>
+                        </button>
+                        <button type="button" onclick="switchCitizenAuthTab('register')" id="tab-citizen-register"
+                            class="flex-1 py-2 px-3 rounded-lg font-medium text-xs transition-all duration-200 flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
+                            <i class="fas fa-user-plus text-sky-600"></i>
+                            <span>สมัครใช้งานใหม่</span>
+                        </button>
+                    </div>
+
+                    <!-- Citizen Form 1: Login -->
+                    <form id="form-citizen-login" onsubmit="event.preventDefault(); (window.app && typeof app.citizenLogin === 'function') ? app.citizenLogin() : handleCitizenLoginFallback();" class="space-y-4">
+                        <div class="space-y-1 text-left">
+                            <label class="block text-xs font-bold text-slate-700">ชื่อผู้ใช้งาน (Username)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fas fa-user text-xs"></i>
+                                </div>
+                                <input type="text" id="citizen-login-username" required
+                                    class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                    placeholder="ชื่อผู้ใช้ หรือ เบอร์โทรศัพท์">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1 text-left">
+                            <label class="block text-xs font-bold text-slate-700">รหัสผ่าน (Password)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fas fa-lock text-xs"></i>
+                                </div>
+                                <input type="password" id="citizen-login-password" required
+                                    class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                    placeholder="รหัสผ่าน">
+                                <button type="button" onclick="app.togglePasswordVisibility('citizen-login-password', this)" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="citizen-login-alert" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium text-left"></div>
+
+                        <button type="submit" id="btn-citizen-login"
+                            class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-right-to-bracket"></i>
+                            <span>เข้าสู่ระบบติดตามคำขอ</span>
+                        </button>
+                    </form>
+
+                    <!-- Citizen Form 2: Register -->
+                    <form id="form-citizen-register" onsubmit="event.preventDefault(); (window.app && typeof app.citizenRegister === 'function') ? app.citizenRegister() : handleCitizenRegisterFallback();" class="hidden space-y-3">
+                        <div class="space-y-1 text-left">
+                            <label class="block text-xs font-bold text-slate-700">ชื่อผู้ใช้งาน (Username) <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fas fa-at text-xs"></i>
+                               </div>
+                                <input type="text" id="citizen-reg-username" required
+                                    class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 text-xs font-medium focus:ring-2 focus:ring-sky-500 outline-none transition-all"
+                                    placeholder="เช่น somchai99">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1 text-left">
+                            <label class="block text-xs font-bold text-slate-700">ชื่อ - นามสกุลจริง ผู้ยื่นคำขอ <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fas fa-user-tag text-xs"></i>
+                             </div>
+                                <input type="text" id="citizen-reg-fullname" required
+                                    class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 text-xs font-medium focus:ring-2 focus:ring-sky-500 outline-none transition-all"
+                                    placeholder="ระบุชื่อ-นามสกุล ภาษาไทยเท่านั้น เพื่อใช้ตรวจสอบข้อมูล">
+                            </div>
+                            <p class="text-[10px] text-slate-500">* ระบบจะค้นหาคำขอที่ตรงกับชื่อ-นามสกุลจริงของผู้ยื่น</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="space-y-1 text-left">
+                                <label class="block text-xs font-bold text-slate-700">รหัสผ่าน <span class="text-rose-500">*</span></label>
+                                <input type="password" id="citizen-reg-password" required
+                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs font-medium focus:ring-2 focus:ring-sky-500 outline-none transition-all"
+                                    placeholder="อย่างน้อย 4 ตัว">
+                            </div>
+                            <div class="space-y-1 text-left">
+                                <label class="block text-xs font-bold text-slate-700">ยืนยันรหัสผ่าน <span class="text-rose-500">*</span></label>
+                                <input type="password" id="citizen-reg-confirm-password" required
+                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs font-medium focus:ring-2 focus:ring-sky-500 outline-none transition-all"
+                                    placeholder="กรอกอีกครั้ง">
+                            </div>
+                        </div>
+
+                        <!-- PDPA Consent Checkbox -->
+                        <div class="p-2.5 rounded-xl bg-sky-50/80 border border-sky-200/80 text-left">
+                            <label class="flex items-start gap-2 cursor-pointer select-none">
+                                <input type="checkbox" id="citizen-reg-pdpa" required
+                                    oninvalid="this.setCustomValidity('กรุณาอ่านข้อกำหนดและนโยบาย PDPA ก่อน')"
+                                    oninput="this.setCustomValidity('')"
+                                    onchange="this.setCustomValidity('')"
+                                    class="w-4 h-4 mt-0.5 text-sky-600 rounded border-slate-300 focus:ring-sky-500">
+                                <span class="text-[11px] text-slate-700 leading-snug">
+                                    ข้าพเจ้ายินยอมให้ประมวลผลข้อมูลและยอมรับ 
+                                    <button type="button" onclick="app.openPdpaModal()" class="text-sky-600 font-bold hover:underline">
+                                        นโยบาย PDPA
+                                    </button>
+                                    ของสำนักงานที่ดินจังหวัดอ่างทอง
+                                </span>
+                            </label>
+                        </div>
+
+                        <div id="citizen-reg-alert" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium text-left"></div>
+
+                        <button type="submit" id="btn-citizen-reg"
+                            class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 via-indigo-600 to-sky-700 hover:from-sky-700 hover:to-indigo-800 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-user-check"></i>
+                            <span>สมัครสมาชิกและเข้าใช้งาน</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-200 text-center flex items-center justify-between px-2 text-[11px] text-slate-500">
+                    <div class="flex items-center gap-1.5 font-bold text-emerald-800">
+                        <i class="fas fa-shield-halved text-emerald-600"></i> มาตรฐานความปลอดภัย PDPA
+                    </div>
+                    <button type="button" onclick="app.openPdpaModal()" class="text-sky-600 hover:underline font-medium">
+                        นโยบายความเป็นส่วนตัว
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar (Hidden by default) -->
+    <aside id="main-sidebar"
+        class="hidden w-64 bg-white text-gray-700 lg:flex flex-col shadow-xl transition-all duration-300 z-20 border-r border-gray-100 relative">
+        <div
+            class="p-6 text-center border-b border-gray-100 bg-gradient-to-br from-emerald-500 to-teal-500 text-white relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full bg-white opacity-10 blur-xl"></div>
+            <h1 class="text-xl font-bold tracking-wider relative z-10">Ang Thong AABM</h1>
+            <div id="user-info" class="relative z-10 mt-2">
+                <p class="text-xs text-emerald-100 font-light">Active Backlog Management</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+            <button onclick="app.navigate('dashboard')"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-300 text-left group"
+                id="nav-dashboard">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-emerald-100 mr-3 transition-colors text-gray-500 group-hover:text-emerald-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                        </path>
+                    </svg>
+                </div>
+                <span class="font-medium">ภาพรวม (Dashboard)</span>
+            </button>
+
+            <button onclick="app.navigate('all_work_search')"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-violet-50 hover:text-violet-700 transition-all duration-300 text-left group"
+                id="nav-all-work-search">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-violet-100 mr-3 transition-colors text-gray-500 group-hover:text-violet-700">
+                    <i class="fas fa-magnifying-glass text-lg"></i>
+                </div>
+                <span class="font-bold">ค้นหาสถานะงานทุกฝ่าย</span>
+            </button>
+
+
+            <button onclick="app.navigate('survey_list')"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 text-left group"
+                id="nav-survey_list">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-indigo-100 mr-3 transition-colors text-gray-500 group-hover:text-indigo-600 shadow-sm">
+                    <i class="fas fa-layer-group text-lg"></i>
+                </div>
+                <span class="font-bold">งานฝ่ายรังวัด</span>
+            </button>
+
+            <button onclick="app.navigate('survey_dashboard')"
+                class="nav-item w-full flex items-center p-2 pl-12 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 text-left group text-sm"
+                id="nav-survey_dashboard">
+                <i class="fas fa-chart-pie mr-2 text-indigo-400 group-hover:text-indigo-600"></i>
+                <span class="text-gray-600 group-hover:text-indigo-600">ภาพรวมฝ่ายรังวัด</span>
+            </button>
+            <a href="survey_classification_dashboard.html"
+                class="w-full flex items-center p-2 pl-12 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 text-left group text-sm">
+                <i class="fas fa-table-columns mr-2 text-indigo-400 group-hover:text-indigo-600"></i>
+                <span class="text-gray-600 group-hover:text-indigo-600">รายงานคัดแยกฝ่ายรังวัด</span>
+            </a>
+            <button onclick="app.showImportModal('survey', false)"
+                class="nav-import-btn w-full flex items-center p-2 pl-12 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 text-left group text-sm"
+                id="nav-import-survey">
+                <i class="fas fa-file-upload mr-2 text-indigo-400 group-hover:text-indigo-600"></i>
+                <span class="text-gray-600 group-hover:text-indigo-600">นำเข้างานใหม่ (CSV/Excel)</span>
+            </button>
+            <button onclick="app.showSameDayCompletionModal('survey')"
+                class="nav-import-btn w-full flex items-center p-2 pl-12 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-300 text-left group text-sm"
+                id="nav-sameday-survey">
+                <i class="fas fa-check-double mr-2 text-emerald-400 group-hover:text-emerald-600"></i>
+                <span class="text-gray-600 group-hover:text-emerald-600">งานเกิดเสร็จวันเดียว</span>
+            </button>
+
+            <button onclick="app.navigate('registration_list')"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 text-left group"
+                id="nav-registration_list">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-blue-100 mr-3 transition-colors text-gray-500 group-hover:text-blue-600 shadow-sm">
+                    <i class="fas fa-folder-open text-lg"></i>
+                </div>
+                <span class="font-bold">งานฝ่ายทะเบียน</span>
+            </button>
+
+            <button onclick="app.navigate('registration_dashboard')"
+                class="nav-item w-full flex items-center p-2 pl-12 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 text-left group text-sm"
+                id="nav-registration_dashboard">
+                <i class="fas fa-chart-pie mr-2 text-blue-400 group-hover:text-blue-600"></i>
+                <span class="text-gray-600 group-hover:text-blue-600">ภาพรวมฝ่ายทะเบียน</span>
+            </button>
+
+            <a href="registration_classification_dashboard.html"
+                class="w-full flex items-center p-2 pl-12 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 text-left group text-sm">
+                <i class="fas fa-table-columns mr-2 text-blue-400 group-hover:text-blue-600"></i>
+                <span class="text-gray-600 group-hover:text-blue-600">รายงานคัดแยกฝ่ายทะเบียน</span>
+            </a>
+
+            <button onclick="app.showImportModal('registration', false)"
+                class="nav-import-btn w-full flex items-center p-2 pl-12 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 text-left group text-sm"
+                id="nav-import-registration">
+                <i class="fas fa-file-upload mr-2 text-blue-400 group-hover:text-blue-600"></i>
+                <span class="text-gray-600 group-hover:text-blue-600">นำเข้างานใหม่ (CSV/Excel)</span>
+            </button>
+            <button onclick="app.showSameDayCompletionModal('registration')"
+                class="nav-import-btn w-full flex items-center p-2 pl-12 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-300 text-left group text-sm"
+                id="nav-sameday-registration">
+                <i class="fas fa-check-double mr-2 text-emerald-400 group-hover:text-emerald-600"></i>
+                <span class="text-gray-600 group-hover:text-emerald-600">งานเกิดเสร็จวันเดียว</span>
+            </button>
+
+            <!-- Academic Link -->
+            <button onclick="app.navigate('academic_list')"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all duration-300 text-left group"
+                id="nav-academic_list">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-orange-100 mr-3 transition-colors text-gray-500 group-hover:text-orange-600 shadow-sm">
+                    <i class="fas fa-book-reader text-lg"></i>
+                </div>
+                <span class="font-bold">งานกลุ่มงานวิชาการ</span>
+            </button>
+
+            <button onclick="app.navigate('academic_dashboard')"
+                class="nav-item w-full flex items-center p-2 pl-12 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all duration-300 text-left group text-sm"
+                id="nav-academic_dashboard">
+                <i class="fas fa-chart-pie mr-2 text-orange-400 group-hover:text-orange-600"></i>
+                <span class="text-gray-600 group-hover:text-orange-600">ภาพรวมฝ่ายวิชาการ</span>
+            </button>
+
+            <button onclick="app.showImportModal('academic', false)"
+                class="nav-import-btn w-full flex items-center p-2 pl-12 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all duration-300 text-left group text-sm"
+                id="nav-import-academic">
+                <i class="fas fa-file-upload mr-2 text-orange-400 group-hover:text-orange-600"></i>
+                <span class="text-gray-600 group-hover:text-orange-600">นำเข้างานใหม่ (CSV/Excel)</span>
+            </button>
+            <button onclick="app.showSameDayCompletionModal('academic')"
+                class="nav-import-btn w-full flex items-center p-2 pl-12 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-300 text-left group text-sm"
+                id="nav-sameday-academic">
+                <i class="fas fa-check-double mr-2 text-emerald-400 group-hover:text-emerald-600"></i>
+                <span class="text-gray-600 group-hover:text-emerald-600">งานเกิดเสร็จวันเดียว</span>
+            </button>
+
+            <!-- Admin (ฝ่ายอำนวยการ) Link -->
+            <button onclick="app.navigate('admin_list')"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-teal-50 hover:text-teal-600 transition-all duration-300 text-left group hidden"
+                id="nav-admin_list">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-teal-100 mr-3 transition-colors text-gray-500 group-hover:text-teal-600 shadow-sm">
+                    <i class="fas fa-building text-lg"></i>
+                </div>
+                <span class="font-bold">งานฝ่ายอำนวยการ</span>
+            </button>
+
+            <button onclick="app.navigate('admin_dashboard')"
+                class="nav-item w-full flex items-center p-2 pl-12 rounded-lg hover:bg-teal-50 hover:text-teal-600 transition-all duration-300 text-left group text-sm hidden"
+                id="nav-admin_dashboard">
+                <i class="fas fa-chart-pie mr-2 text-teal-400 group-hover:text-teal-600"></i>
+                <span class="text-gray-600 group-hover:text-teal-600">ภาพรวมฝ่ายอำนวยการ</span>
+            </button>
+
+            <button onclick="app.showImportModal('admin', false)"
+                class="nav-import-btn w-full flex items-center p-2 pl-12 rounded-lg hover:bg-teal-50 hover:text-teal-600 transition-all duration-300 text-left group text-sm hidden"
+                id="nav-import-admin">
+                <i class="fas fa-file-upload mr-2 text-teal-400 group-hover:text-teal-600"></i>
+                <span class="text-gray-600 group-hover:text-teal-600">นำเข้างานใหม่ (CSV/Excel)</span>
+            </button>
+            <button onclick="app.showSameDayCompletionModal('admin')"
+                class="nav-import-btn w-full flex items-center p-2 pl-12 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-300 text-left group text-sm hidden"
+                id="nav-sameday-admin">
+                <i class="fas fa-check-double mr-2 text-emerald-400 group-hover:text-emerald-600"></i>
+                <span class="text-gray-600 group-hover:text-emerald-600">งานเกิดเสร็จวันเดียว</span>
+            </button>
+
+            <a href="report.html"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-300 text-left group hidden"
+                id="nav-report">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-emerald-100 mr-3 transition-colors text-gray-500 group-hover:text-emerald-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                </div>
+                <span class="font-medium">รายงานงานเกิดใหม่</span>
+            </a>
+
+            <a href="old_backlog_report.html"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all duration-300 text-left group hidden"
+                id="nav-old-backlog">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-orange-100 mr-3 transition-colors text-gray-500 group-hover:text-orange-600">
+                    <i class="fas fa-clock-rotate-left w-5 h-5 flex items-center justify-center"></i>
+                </div>
+                <span class="font-medium">รายงานงานค้างเก่า</span>
+            </a>
+
+            <a href="admin_backlog_summary.html"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 text-left group hidden"
+                id="nav-admin-backlog-summary">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-indigo-100 mr-3 transition-colors text-gray-500 group-hover:text-indigo-600">
+                    <i class="fas fa-chart-line w-5 h-5 flex items-center justify-center"></i>
+                </div>
+                <span class="font-medium">งานค้างผู้ตรวจ</span>
+            </a>
+
+            <a href="sameday_report.html"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-teal-50 hover:text-teal-600 transition-all duration-300 text-left group hidden"
+                id="nav-sameday-report">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-teal-100 mr-3 transition-colors text-gray-500 group-hover:text-teal-600">
+                    <i class="fas fa-clipboard-check w-5 h-5 flex items-center justify-center"></i>
+                </div>
+                <span class="font-medium">รายงานงานเกิดเสร็จวันเดียว</span>
+            </a>
+
+            <a href="pending_report.html"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-all duration-300 text-left group hidden"
+                id="nav-pending-report">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-rose-100 mr-3 transition-colors text-gray-500 group-hover:text-rose-600">
+                    <i class="fas fa-list-check w-5 h-5 flex items-center justify-center"></i>
+                </div>
+                <span class="font-medium">รายงานงานค้างทั้งหมด</span>
+            </a>
+
+            <a href="final_step_report.html"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition-all duration-300 text-left group hidden"
+                id="nav-final-step-report">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-purple-100 mr-3 transition-colors text-gray-500 group-hover:text-purple-600">
+                    <i class="fas fa-flag-checkered w-5 h-5 flex items-center justify-center"></i>
+                </div>
+                <span class="font-medium">งานสุดขั้นตอน</span>
+            </a>
+
+            <button onclick="app.showAdminMenuPopup()"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-slate-50 hover:text-indigo-600 transition-all duration-300 text-left group hidden"
+                id="nav-all-admin">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-indigo-100 mr-3 transition-colors text-gray-500 group-hover:text-indigo-600 shadow-sm border border-gray-200">
+                    <i class="fas fa-layer-group w-5 h-5 flex items-center justify-center"></i>
+                </div>
+                <span class="font-bold">การจัดการระบบ (Admin)</span>
+            </button>
+
+            <!-- Logout Button -->
+            <button onclick="app.logout()"
+                class="nav-item w-full flex items-center p-3 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-300 text-left group mt-auto border-t border-gray-100 pt-4"
+                id="nav-logout">
+                <div
+                    class="p-2 bg-gray-100 rounded-lg group-hover:bg-red-100 mr-3 transition-colors text-gray-500 group-hover:text-red-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                        </path>
+                    </svg>
+                </div>
+                <span class="font-medium">ออกจากระบบ</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-gray-200 text-xs text-gray-400 text-center bg-gray-50">
+            &copy; 2025 Ang Thong Active Backlog Management
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="hidden flex-1 overflow-y-auto flex flex-col relative w-full pb-24 lg:pb-0">
+        <!-- Header -->
+        <header class="bg-white/95 shadow-sm p-4 sticky top-0 z-10 border-b border-gray-100">
+            <div class="flex justify-between items-center px-4">
+                <div>
+                    <h2 id="page-title" class="text-2xl font-bold text-gray-800 tracking-tight" data-aos="fade-down">
+                        ภาพรวม</h2>
+                    <p class="text-sm text-gray-400 mt-1" data-aos="fade-down" data-aos-delay="100">
+                        Ang Thong Active Backlog Management (AABM) เพื่อการติดตามและรายงานผล</p>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button type="button" onclick="app.refreshCurrentPage()" id="btn-refresh-page"
+                        class="inline-flex items-center gap-2 rounded-xl bg-white border border-emerald-200 px-3.5 py-2 text-sm font-bold text-emerald-700 shadow-sm transition-all hover:bg-emerald-50 hover:border-emerald-300 active:scale-95 focus:outline-none focus:ring-4 focus:ring-emerald-100 cursor-pointer"
+                        title="รีเฟรชข้อมูล (Refresh)" aria-label="รีเฟรชข้อมูล">
+                        <i id="refresh-icon" class="fas fa-arrows-rotate text-emerald-600 transition-transform"></i>
+                        <span class="hidden sm:inline">รีเฟรช</span>
+                    </button>
+                    <button type="button" onclick="app.navigate('all_work_search')"
+                        class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-violet-700 focus:outline-none focus:ring-4 focus:ring-violet-100 cursor-pointer"
+                        aria-label="ค้นหาสถานะงานทุกฝ่าย">
+                        <i class="fas fa-magnifying-glass"></i>
+                        <span class="hidden sm:inline">ค้นหาสถานะงาน</span>
+                    </button>
+                    <div class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium border border-emerald-100 shadow-sm hidden md:block"
+                        id="current-date" data-aos="fade-left"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content -->
+        <div id="app-content" class="p-6 max-w-7xl mx-auto w-full">
+            <!-- Content will be injected here via JS -->
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-gray-900/40 transition-opacity" onclick="app.closeDetailModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl m-4 relative z-10 p-0 overflow-hidden transform transition-all scale-100"
+            data-aos="zoom-in">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white flex justify-between items-start">
+                <div>
+                    <h3 id="detail-modal-title" class="text-xl font-bold mb-1">รายละเอียดงาน</h3>
+                    <p id="detail-modal-subtitle" class="text-emerald-100 text-sm opacity-90">ข้อมูลครบถ้วนของรายการที่เลือก</p>
+                </div>
+                <button onclick="app.closeDetailModal()"
+                    class="text-white/80 hover:text-white hover:bg-white/20 p-1 rounded-full transition-colors"
+                    aria-label="ปิดหน้าต่างรายละเอียด">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div id="detail-modal-content" class="p-8 space-y-4 max-h-[70vh] overflow-y-auto">
+                <!-- Content injected via JS -->
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-gray-50 px-8 py-4 border-t border-gray-100 flex justify-end">
+                <button onclick="app.closeDetailModal()"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg transition-colors">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDPA Policy Modal -->
+    <div id="pdpa-modal" class="fixed inset-0 z-[110] hidden overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div class="px-6 py-5 bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-shield-halved text-emerald-400 text-xl"></i>
+                    <div>
+                        <h3 class="font-bold text-lg">นโยบายคุ้มครองข้อมูลส่วนบุคคล (PDPA Policy)</h3>
+                        <p class="text-xs text-slate-300">AABM Smart Track • สำนักงานที่ดินจังหวัดอ่างทอง ตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. ๒๕๖๒</p>
+                    </div>
+                </div>
+                <button type="button" onclick="app.closePdpaModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+
+            <div class="p-6 max-h-[60vh] overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-900">
+                    <strong class="block text-sm mb-1 font-bold">การคุ้มครองความเป็นส่วนตัวและทรัพย์สินตามมาตรฐาน PDPA</strong>
+                    สำนักงานที่ดินจังหวัดอ่างทอง ปฏิบัติตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. ๒๕๖๒ (PDPA) อย่างเคร่งครัด เพื่อความปลอดภัยของข้อมูลทรัพย์สินของประชาชน
+                </div>
+                
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-slate-900 text-sm">1. มาตรการไม่เปิดเผยเลขโฉนดที่ดิน (No Deed Number Disclosure)</h4>
+                    <p class="text-slate-600">
+                        เพื่อป้องกันการนำข้อมูลเลขโฉนดที่ดินหรือสารบัญที่ดินไปใช้ในทางมิชอบ ระบบ AABM Smart Track <strong>จะไม่แสดงเลขโฉนดที่ดินหรือเลขแปลงที่ดินใดๆ บนหน้าจอแสดงผลทั้งสิ้น</strong> ประชาชนสามารถตรวจสอบขั้นตอนสถานะความคืบหน้าของคำขอได้ด้วยความมั่นใจและปลอดภัยสูงสุด
+                    </p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-slate-900 text-sm">2. การเข้าถึงข้อมูลเฉพาะบุคคล (Verified Identity Access)</h4>
+                    <p class="text-slate-600">
+                        ระบบจะแสดงข้อมูลคำขอที่ตรงกับ <strong>"ชื่อ-นามสกุลจริง"</strong> ของผู้สมัครใช้งานเท่านั้น เพื่อป้องกันการเข้าถึงข้อมูลของผู้อื่นโดยมิได้รับอนุญาต
+                    </p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-slate-900 text-sm">3. สิทธิของเจ้าของข้อมูลส่วนบุคคล</h4>
+                    <p class="text-slate-600">
+                        ท่านมีสิทธิในการเข้าถึง ขอสำเนา หรือขอลบข้อมูลบัญชีของท่านออกจากระบบได้ตลอดเวลาตามสิทธิที่กฎหมายกำหนด
+                    </p>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-xs text-slate-400 font-medium">สำนักงานที่ดินจังหวัดอ่างทอง</span>
+                <button type="button" onclick="app.closePdpaModal()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-colors">
+                    รับทราบและเข้าใจ
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Mobile Bottom Navigation -->
+    <nav
+        class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 z-40 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div class="flex justify-around items-center h-20 px-2">
+            <button onclick="app.navigate('dashboard')"
+                class="mobile-nav-item flex flex-1 flex-col items-center justify-center h-full text-gray-400 hover:text-emerald-600 transition-colors group"
+                data-page="dashboard">
+                <div class="p-1 rounded-full group-hover:bg-emerald-50 transition-colors mb-1">
+                    <i class="fas fa-th-large text-xl"></i>
+                </div>
+                <span class="text-[10px] font-medium">ภาพรวม</span>
+            </button>
+            <button onclick="app.navigate('survey_list')"
+                class="mobile-nav-item flex flex-1 flex-col items-center justify-center h-full text-gray-400 hover:text-emerald-600 transition-colors group"
+                data-page="survey_list">
+                <div class="p-1 rounded-full group-hover:bg-emerald-50 transition-colors mb-1">
+                    <i class="fas fa-map-marked-alt text-xl"></i>
+                </div>
+                <span class="text-[10px] font-medium">รังวัด</span>
+            </button>
+            <button onclick="app.navigate('registration_list')"
+                class="mobile-nav-item flex flex-1 flex-col items-center justify-center h-full text-gray-400 hover:text-emerald-600 transition-colors group"
+                data-page="registration_list">
+                <div class="p-1 rounded-full group-hover:bg-emerald-50 transition-colors mb-1">
+                    <i class="fas fa-folder-open text-xl"></i>
+                </div>
+                <span class="text-[10px] font-medium">ทะเบียน</span>
+            </button>
+            <button onclick="app.navigate('academic_list')"
+                class="mobile-nav-item flex flex-1 flex-col items-center justify-center h-full text-gray-400 hover:text-orange-600 transition-colors group"
+                data-page="academic_list">
+                <div class="p-1 rounded-full group-hover:bg-orange-50 transition-colors mb-1">
+                    <i class="fas fa-book-reader text-xl"></i>
+                </div>
+                <span class="text-[10px] font-medium">วิชาการ</span>
+            </button>
+
+            <a href="sameday_report.html" id="mobile-nav-sameday-report"
+                class="mobile-nav-item flex flex-1 flex-col items-center justify-center h-full text-gray-400 hover:text-teal-600 transition-colors group hidden"
+                data-page="sameday-report">
+                <div class="p-1 rounded-full group-hover:bg-teal-50 transition-colors mb-1">
+                    <i class="fas fa-clipboard-check text-xl"></i>
+                </div>
+                <span class="text-[10px] font-medium">เกิดเสร็จ</span>
+            </a>
+
+            <a href="report.html" id="mobile-nav-report"
+                class="mobile-nav-item flex flex-1 flex-col items-center justify-center h-full text-gray-400 hover:text-emerald-600 transition-colors group hidden"
+                data-page="report">
+                <div class="p-1 rounded-full group-hover:bg-emerald-50 transition-colors mb-1">
+                    <i class="fas fa-chart-pie text-xl"></i>
+                </div>
+                <span class="text-[10px] font-medium">รายงาน</span>
+            </a>
+            <button onclick="app.logout()"
+                class="flex flex-1 flex-col items-center justify-center h-full text-gray-400 hover:text-red-500 transition-colors group">
+                <div class="p-1 rounded-full group-hover:bg-red-50 transition-colors mb-1">
+                    <i class="fas fa-sign-out-alt text-xl"></i>
+                </div>
+                <span class="text-[10px] font-medium">ออก</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="libs/aos/aos.js"></script>
+    <script src="js/api-config.js?v=3.0"></script>
+    <script src="js/error-tracker.js?v=1.0"></script>
+    <script src="js/data.js?v=3.0.1"></script>
+
+    <!-- Add Work Modal -->
+    <div id="add-work-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="document.getElementById('add-work-modal').classList.add('hidden')"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-gray-100">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-4 sm:px-6 flex justify-between items-center">
+                    <h3 class="text-xl font-bold leading-6 text-white flex items-center" id="modal-title">
+                        <i class="fas fa-plus-circle mr-3"></i> เพิ่มงานใหม่
+                    </h3>
+                    <button type="button" onclick="document.getElementById('add-work-modal').classList.add('hidden')"
+                        class="text-white/80 hover:text-white hover:bg-white/20 p-1.5 rounded-full transition-colors cursor-pointer"
+                        aria-label="ปิดหน้าต่าง">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body + Footer wrapped in Form -->
+                <form id="add-work-form" onsubmit="event.preventDefault(); app.handleSaveWork();">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 max-h-[65vh] overflow-y-auto">
+                        <div id="add-work-fields" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <!-- Dynamic Fields -->
+                        </div>
+                    </div>
+
+                    <!-- Footer inside form -->
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-100">
+                        <button id="btn-save-work" type="submit"
+                            class="inline-flex w-full justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-[1.02] sm:ml-3 sm:w-auto transition-all duration-200 cursor-pointer"
+                            aria-label="บันทึกข้อมูล">
+                            <i class="fas fa-save mr-2"></i> บันทึกข้อมูล
+                        </button>
+                        <button type="button" onclick="document.getElementById('add-work-modal').classList.add('hidden')"
+                            class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-all duration-200 cursor-pointer">
+                            ยกเลิก
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Work Modal (บันทึกงานเสร็จทันที) -->
+    <div id="completed-work-modal" class="hidden fixed inset-0 z-50 overflow-y-auto"
+        aria-labelledby="completed-modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="document.getElementById('completed-work-modal').classList.add('hidden')"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-gray-100">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-green-600 to-emerald-700 px-4 py-4 sm:px-6 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold leading-6 text-white flex items-center" id="completed-modal-title">
+                            <i class="fas fa-check-circle mr-3"></i> บันทึกงานเสร็จ
+                        </h3>
+                        <p class="text-green-100 text-sm mt-1">
+                            <i class="fas fa-info-circle mr-1"></i> งานจะถูกบันทึกและนับว่าเสร็จแล้วทันที
+                        </p>
+                    </div>
+                    <button type="button" onclick="document.getElementById('completed-work-modal').classList.add('hidden')"
+                        class="text-white/80 hover:text-white hover:bg-white/20 p-1.5 rounded-full transition-colors cursor-pointer"
+                        aria-label="ปิดหน้าต่าง">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body + Footer wrapped in Form -->
+                <form id="completed-work-form" onsubmit="event.preventDefault(); app.handleSaveCompletedWork();">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 max-h-[65vh] overflow-y-auto">
+                        <!-- Alert Badge -->
+                        <div
+                            class="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm flex items-center">
+                            <i class="fas fa-check-double mr-2 text-green-600"></i>
+                            <span>งานนี้จะบันทึกเป็น <strong>"เสร็จสิ้น"</strong>
+                                โดยใช้วันที่รับเรื่องเป็นวันที่ดำเนินการเสร็จ</span>
+                        </div>
+                        <div id="completed-work-fields" class="mt-2">
+                            <!-- Dynamic Fields inject here -->
+                        </div>
+                    </div>
+
+                    <!-- Footer inside form -->
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-100">
+                        <button id="btn-save-completed-work" type="submit"
+                            class="inline-flex w-full justify-center rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] sm:ml-3 sm:w-auto transition-all duration-200 cursor-pointer"
+                            aria-label="บันทึกงานเสร็จ">
+                            <i class="fas fa-check-circle mr-2"></i> บันทึกงานเสร็จ
+                        </button>
+                        <button type="button" onclick="document.getElementById('completed-work-modal').classList.add('hidden')"
+                            class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-all duration-200 cursor-pointer">
+                            ยกเลิก
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/ui.js?v=3.3.3"></script>
+    <script src="js/app.js?v=3.3.5"></script>
+
+    <!-- Announcement Popup Script -->
+    <script>
+        (function () {
+            const API_BASE = (typeof ApiConfig !== 'undefined' && ApiConfig.baseUrl) ? ApiConfig.baseUrl : 'api';
+            let _needScroll = true;
+            let _currentItem = null;
+
+            function getCurrentUsername() {
+                try {
+                    const u = localStorage.getItem('dol_user');
+                    if (u) return JSON.parse(u).username || null;
+                } catch (e) { }
+                return null;
+            }
+
+            function getCurrentDepartment() {
+                try {
+                    const u = localStorage.getItem('dol_user');
+                    if (u) return JSON.parse(u).department || null;
+                } catch (e) { }
+                return null;
+            }
+
+            function hasAcceptedToday(announcementId, username) {
+                try {
+                    const key = `ann_accept_${announcementId}_${username || 'anon'}`;
+                    const val = localStorage.getItem(key);
+                    if (!val) return false;
+                    return val === new Date().toISOString().slice(0, 10);
+                } catch (e) { return false; }
+            }
+
+            function markAcceptedLocally(announcementId, username) {
+                try {
+                    const key = `ann_accept_${announcementId}_${username || 'anon'}`;
+                    localStorage.setItem(key, new Date().toISOString().slice(0, 10));
+                } catch (e) { }
+            }
+
+            async function recordAcceptance(announcementId, username) {
+                try {
+                    await fetch(API_BASE + '/announcement_accept.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ announcement_id: announcementId, username: username || 'anonymous' })
+                    });
+                } catch (e) { /* silent */ }
+            }
+
+            async function fetchActiveAnnouncement() {
+                try {
+                    const username = getCurrentUsername();
+                    const dept = getCurrentDepartment();
+                    let url = API_BASE + '/announcement.php?active=1';
+                    if (dept) url += '&department=' + encodeURIComponent(dept);
+                    if (username) url += '&username=' + encodeURIComponent(username);
+
+                    const res = await fetch(url);
+                    const json = await res.json();
+                    if (json.status === 'success' && json.data && json.data.length > 0) {
+                        // Find first active announcement not yet accepted today by this user
+                        const item = json.data.find(a => !username || !hasAcceptedToday(a.id, username));
+                        if (item) {
+                            showAnnouncementPopup(item);
+                        }
+                    }
+                } catch (e) { /* silent */ }
+            }
+
+            function showAnnouncementPopup(item) {
+                _currentItem = item;
+                const backdrop = document.getElementById('announcement-popup-backdrop');
+                const titleEl = document.getElementById('announcement-popup-title');
+                const contentEl = document.getElementById('announcement-popup-content');
+                const deptBadge = document.getElementById('announcement-popup-dept-badge');
+
+                if (deptBadge) {
+                    const d = item.target_dept || 'all';
+                    if (d === 'survey') {
+                        deptBadge.className = 'px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200';
+                        deptBadge.innerHTML = '<i class="fas fa-map-marked-alt mr-1"></i>เฉพาะฝ่ายรังวัด';
+                        deptBadge.classList.remove('hidden');
+                    } else if (d === 'registration') {
+                        deptBadge.className = 'px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200';
+                        deptBadge.innerHTML = '<i class="fas fa-folder-open mr-1"></i>เฉพาะฝ่ายทะเบียน';
+                        deptBadge.classList.remove('hidden');
+                    } else if (d === 'academic') {
+                        deptBadge.className = 'px-2 py-0.5 text-[11px] font-bold rounded-full bg-orange-100 text-orange-700 border border-orange-200';
+                        deptBadge.innerHTML = '<i class="fas fa-book-reader mr-1"></i>เฉพาะกลุ่มงานวิชาการ';
+                        deptBadge.classList.remove('hidden');
+                    } else if (d === 'admin') {
+                        deptBadge.className = 'px-2 py-0.5 text-[11px] font-bold rounded-full bg-teal-100 text-teal-700 border border-teal-200';
+                        deptBadge.innerHTML = '<i class="fas fa-building mr-1"></i>เฉพาะฝ่ายอำนวยการ';
+                        deptBadge.classList.remove('hidden');
+                    } else {
+                        deptBadge.className = 'px-2 py-0.5 text-[11px] font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200';
+                        deptBadge.innerHTML = '<i class="fas fa-globe mr-1"></i>ทุกฝ่าย';
+                        deptBadge.classList.remove('hidden');
+                    }
+                }
+                const okBtn = document.getElementById('btn-announcement-ok');
+                const scrollEl = document.getElementById('announcement-scroll-body');
+                const bar = document.getElementById('announcement-scroll-bar');
+                const pct = document.getElementById('announcement-scroll-pct');
+                const badge = document.getElementById('announcement-read-badge');
+                const label = document.getElementById('announcement-scroll-label');
+                const acceptChk = document.getElementById('announcement-accept-check');
+
+                titleEl.textContent = item.title;
+                contentEl.textContent = item.content;
+                _needScroll = item.require_scroll == 1;
+
+                okBtn.disabled = _needScroll;
+                bar.style.width = '0%';
+                pct.textContent = '0%';
+                badge.classList.add('hidden');
+                scrollEl.scrollTop = 0;
+                acceptChk.checked = false;
+
+                if (!_needScroll) {
+                    okBtn.disabled = false;
+                    bar.style.width = '100%';
+                    pct.textContent = '100%';
+                    badge.classList.remove('hidden');
+                    label.innerHTML = '<i class="fas fa-check-circle mr-1 text-emerald-500"></i> ไม่บังคับเลื่อนอ่าน';
+                }
+
+                backdrop.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+
+                if (_needScroll) scrollEl.addEventListener('scroll', onScroll);
+
+                const sentinel = document.getElementById('announcement-scroll-sentinel');
+                const observer = new IntersectionObserver(entries => {
+                    if (entries[0].isIntersecting && _needScroll) unlockOk();
+                }, { root: scrollEl, threshold: 0.99 });
+                observer.observe(sentinel);
+
+                function onScroll() {
+                    const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
+                    if (maxScroll <= 0) { unlockOk(); return; }
+                    const progress = Math.min(100, Math.round((scrollEl.scrollTop / maxScroll) * 100));
+                    bar.style.width = progress + '%';
+                    pct.textContent = progress + '%';
+                }
+
+                function unlockOk() {
+                    if (!okBtn.disabled) return;
+                    okBtn.disabled = false;
+                    badge.classList.remove('hidden');
+                    label.innerHTML = '<i class="fas fa-check-circle mr-1 text-emerald-500"></i><span class="text-emerald-600 font-bold"> อ่านครบแล้วนะแน่ๆ!</span>';
+                    bar.style.width = '100%';
+                    pct.textContent = '100%';
+                    okBtn.style.animation = 'none';
+                    setTimeout(() => { okBtn.style.animation = ''; }, 10);
+                    scrollEl.removeEventListener('scroll', onScroll);
+                    observer.disconnect();
+                }
+
+                okBtn.addEventListener('click', async function closePopup() {
+                    const isAccepted = acceptChk.checked;
+                    const username = getCurrentUsername();
+                    if (isAccepted && _currentItem) {
+                        markAcceptedLocally(_currentItem.id, username);
+                        recordAcceptance(_currentItem.id, username || 'anonymous');
+                    }
+                    backdrop.classList.add('hidden');
+                    document.body.style.overflow = '';
+                    okBtn.removeEventListener('click', closePopup);
+                    scrollEl.removeEventListener('scroll', onScroll);
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', fetchActiveAnnouncement);
+            window.addEventListener('dol_login_success', fetchActiveAnnouncement);
+        })();
+    </script>
+</body>
+
+</html>
+
